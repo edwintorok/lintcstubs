@@ -1,0 +1,59 @@
+; compiler-libs has unstable API, ensure only one module uses it to simplify
+; maintenance
+
+(library
+ (name shapes_of_types)
+ (modules shapes_of_types)
+ (libraries compiler-libs.common lintcstubs-arity.primitives_of_cmt))
+
+(executable
+ (public_name lintcstubs_genmain)
+ (modules lintcstubs_genmain)
+ (libraries lintcstubs-arity.primitives_of_cmt shapes_of_types)
+ (package lintcstubs))
+
+(cram
+ (deps %{bin:lintcstubs_genmain}))
+
+(rule
+ (target genmain_test.model.c)
+ (deps
+  (:cmt
+   (glob_files %{ocaml_where}/*.cmt))
+  (:linter %{bin:lintcstubs_genmain}))
+ (action
+  (with-stdout-to
+   %{target}
+   (run %{linter} %{cmt}))))
+
+; run both header generators: good way to test that they agree
+; on the bytecode prototypes!
+
+(rule
+ (deps
+  (:cmt_files
+   (glob_files %{ocaml_where}/*.cmt))
+  (:mlfiles
+   (glob_files %{ocaml_where}/*.ml)))
+ (action
+  (with-stdout-to
+   primitives.h
+   (progn
+    (run lintcstubs_arity %{mlfiles})
+    (run lintcstubs_arity_cmt %{cmt_files})))))
+
+; check that the model compiles with usual compiler
+
+(library
+ (name genmain_test)
+ (modules)
+ (foreign_stubs
+  (language c)
+  (flags
+   (:standard -Werror-implicit-function-declaration))
+  (names genmain_test.model)
+  (include_dirs ../model/include))
+ (package lintcstubs))
+
+(cram
+ (deps %{bin:lintcstubs_genmain}))
