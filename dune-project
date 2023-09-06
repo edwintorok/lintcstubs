@@ -9,13 +9,26 @@
 (maintainers "Edwin Török <edwin.torok@cloud.com>")
 (license LGPL-2.1-or-later)
 
+; Separate packages because the generator also works on OCaml 5
+; The static analyzer doesn't yet because released versions of goblint don't support it yet (but dev version does)
+
+(package
+ (name lintcstubs-gen)
+ (synopsis "OCaml C stub wrapper generator")
+ (description "Generates a C model for how OCaml C primitives can be called. Link with a C model of the OCaml runtime, or run a static analyzer to find incorrect API/macro usage that leads to race conditions.")
+ (depends
+  (ocaml (>= 4.14))
+  (lintcstubs-arity (>= 0.2.2))
+ )
+)
+
 (package
  (name lintcstubs)
  (synopsis "OCaml C stub static analyzer")
- (description "Generates a C model for how OCaml C primitives can be called. Link with a C model of the OCaml runtime, and run a static analyzer to find incorrect API/macro usage that leads to race conditions.")
+ (description "Uses a generated C model for how OCaml C primitives can be called. Run a static analyzer to find incorrect API/macro usage that leads to race conditions.")
  (depends
   (ocaml (>= 4.14))
+  (lintcstubs-gen (= :version))
   (goblint (>= 2.1.0))
-  (lintcstubs-arity (>= 0.2))
  )
 )

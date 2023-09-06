@@ -1,29 +1,32 @@
 ; compiler-libs has unstable API, ensure only one module uses it to simplify
 ; maintenance
 
+(library
+ (package lintcstubs-gen)
+ (name shapes_of_types)
+ (modules shapes_of_types)
+ (libraries compiler-libs.common lintcstubs-arity.primitives_of_cmt))
+
 (executable
- (public_name lintcstubs_genmain)
- (modules lintcstubs_genmain)
+ (public_name lintcstubs_genwrap)
+ (modules lintcstubs_genwrap)
  (libraries lintcstubs-arity.primitives_of_cmt shapes_of_types)
  (package lintcstubs-gen))
 
 (cram
- (deps %{bin:lintcstubs_genmain})
+ (deps %{bin:lintcstubs_genwrap} %{bin:lintcstubs_arity_cmt})
  (package lintcstubs-gen))
 
 (rule
- (target genmain_test.model.c)
+ (target genwrap_test.model.c)
  (deps
-  (:genwrap_c ../genwrap/genwrap_test.model.c)
   (:cmt
    (glob_files %{ocaml_where}/*.cmt))
-  (:linter %{bin:lintcstubs_genmain}))
+  (:linter %{bin:lintcstubs_genwrap}))
  (action
   (with-stdout-to
    %{target}
-   (progn
-    (cat %{genwrap_c})
-    (run %{linter} %{cmt})))))
+   (run %{linter} %{cmt}))))
 
 ; run both header generators: good way to test that they agree
 ; on the bytecode prototypes!
@@ -47,20 +50,14 @@
 
 (library
  (package lintcstubs-gen)
- (name genmain_test)
+ (name genwrap_test)
  (modules)
  (foreign_stubs
   (language c)
   (flags
    (:standard -Werror-implicit-function-declaration -Wall))
-  (names genmain_test.model)
-  (include_dirs ../model/include)))
+  (names genwrap_test.model)))
 
 (cram
- (deps
-  %{bin:lintcstubs_genmain}
-  %{bin:lintcstubs_genwrap}
-  %{bin:lintcstubs_arity}
-  %{bin:lintcstubs_arity_cmt}
-  ../model/include/goblint.h)
- (package lintcstubs-gen))
+ (package lintcstubs-gen)
+ (deps %{bin:lintcstubs_genwrap}))

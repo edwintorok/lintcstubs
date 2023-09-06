@@ -48,6 +48,7 @@
 
 #include <caml/unixsupport.h>
 #include <caml/version.h>
+#include <caml/address_class.h>
 
 #include <caml/gc.h>
 
@@ -70,8 +71,14 @@ int __VERIFIER_nondet_int(void);
 #define STUB __attribute__((goblint_stub))
 
 caml_domain_state mainstate;
+
+#ifndef Caml_state_opt
 /* avoid a lot of NULL deref alerts */
 caml_domain_state *Caml_state = &mainstate;
+#else
+__thread caml_domain_state *Caml_state_opt = &mainstate;
+#endif
+
 
 /* CIL runs after preprocessing so cannot see or evaluate macros,
  * i.e. we cannot directly check whether a function contains calls to CAMLparam or not.
@@ -107,7 +114,7 @@ CAMLnoreturn_start void __caml_exception_raised() CAMLnoreturn_end STUB;
 
 STUB void __access_Val(value v)
 {
-    if ( !Is_block(v) )
+    if ( Is_block(v) )
         (void)Tag_val(v);
 }
 
@@ -245,11 +252,11 @@ STUB void __caml_maybe_run_gc(void)
     if ( !__VERIFIER_nondet_int() )
         return;
 
-    struct caml__roots_block *lr;
+    struct caml__roots_block *lr = CAML_LOCAL_ROOTS;
     int i, j;
     value *sp;
-
-    for ( lr = CAML_LOCAL_ROOTS; lr != NULL; lr = lr->next )
+    if (lr)
+    for (; lr != NULL; lr = lr->next )
     {
         for ( i = 0; i < lr->ntables; i++ )
         {
@@ -282,7 +289,10 @@ STUB value caml_alloc_shr(mlsize_t wosize, tag_t tag)
     __goblint_assume(!((intnat)p & 1));
     Hd_hp(p) = Make_header(wosize, tag, 0);
 
-    return Val_hp(p);
+    value v = Val_hp(p);
+    __goblint_assume(Is_block(v));
+    assert(Is_block(v));
+    return v;
 }
 
 STUB value caml_alloc_small(mlsize_t wosize, tag_t tag)
@@ -364,7 +374,9 @@ STUB value caml_copy_string(const char *s)
 STUB value caml_copy_double(double f)
 {
     value v = caml_alloc_small(Double_wosize, Double_tag);
+    assert(Is_block(v));
     Store_double_val(v, f);
+    assert(Is_block(v));
     return v;
 }
 
@@ -532,15 +544,15 @@ STUB static void *__caml_maybe_call_gc(void *arg)
 
 STUB static void __caml_maybe_run_another_thread(void)
 {
-    pthread_attr_t attr;
+    pthread_attr_t attrib;
     pthread_t thread;
     int rc;
     /* create thread detached, so no join will be needed */
-    rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    rc = pthread_attr_setdetachstate(&attrib, PTHREAD_CREATE_DETACHED);
     __goblint_assume(!rc);
     /* Make it very obvious that another thread might run here, by creating one
      */
-    rc = pthread_create(&thread, &attr, __caml_maybe_call_gc, NULL);
+    rc = pthread_create(&thread, &attrib, __caml_maybe_call_gc, NULL);
     __goblint_assume(!rc);
 }
 
@@ -601,4 +613,17 @@ STUB void caml_noalloc_end(int *noalloc)
 STUB void caml_alloc_point_here(void)
 {
     __goblint_assert(!__in_noalloc);
+}
+
+STUB int caml_page_table_lookup(void* v)
+{
+    int res = __VERIFIER_nondet_int();
+    return res & (In_heap | In_young | In_static_data);
+}          
+
+/* for now assume it can't happen */
+STUB void caml_raise_out_of_memory()
+{
+    __builtin_unreachable();
+    
 }

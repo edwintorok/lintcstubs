@@ -4,7 +4,7 @@ module Shape : sig
 
   type unboxed =
     | TaggedInt of int range
-    | UntaggedInt of nativeint range
+    | UntaggedInt of string * nativeint range
     | DoubleArrayElement
 
   (** memory layout and value range of an OCaml type *)
@@ -14,7 +14,7 @@ module Shape : sig
     | Exception  (** an OCaml exception *)
     | Variant of unboxed option * boxed array
         (** an OCaml variant, can contain both unboxed and boxed elements *)
-    | Arrow of t * t  (** a function *)
+    | Arrow of (Types.type_expr * t) * (Types.type_expr * t)  (** a function *)
     | Unknown  (** not yet supported *)
     | Bytecode_argv of int  (** [value[argn]] *)
 
@@ -34,10 +34,20 @@ module Shape : sig
               (** elements of possibly different shapes, e.g. a record *)
       }
     | Object  (** an OCaml object, more precise analysis not supported yet *)
+
+  val untagged_constant : int -> t
 end
 
+val basic : Shape.t list
+(** [basic] built-in types *)
+
+val ctype_of_shape : Shape.t -> string
+(** [ctype_of_shape shape] returns the C type corresponding to OCaml value [shape]. *)
+
 val shape_of_primitive :
-  Types.type_expr -> Primitives_of_cmt.t -> Shape.t * Shape.t list
+     Types.type_expr
+  -> Primitives_of_cmt.t
+  -> (string option * Shape.t) * (string option * Shape.t) list
 (** [shape_of_primitive type_expr primitive_type] infers the shape of a primitive argument or return value.
 
   @param type_expr the type expression from the TypedTree

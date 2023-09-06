@@ -36,7 +36,8 @@ module Shape = struct
   (** Integers and float array elements are stored directly in values *)
   type unboxed =
     | TaggedInt of int range  (** OCaml integer with given range *)
-    | UntaggedInt of nativeint range  (** OCaml integer with given range *)
+    | UntaggedInt of string * nativeint range
+        (** OCaml integer with given range *)
     | DoubleArrayElement  (** An unboxed float array element *)
 
   (** information about the size and layout of an OCaml type *)
@@ -46,7 +47,7 @@ module Shape = struct
     | Exception  (** exceptions have dedicated API calls *)
     | Variant of unboxed option * boxed array
         (** a variant can contain both boxed and unboxed types: [A | B of ... | C ...] *)
-    | Arrow of t * t  (** [e1 -> e2] *)
+    | Arrow of (Types.type_expr * t) * (Types.type_expr * t)  (** [e1 -> e2] *)
     | Unknown  (** a value we cannot yet analyze (e.g. abstract type) *)
     | Bytecode_argv of int  (** an array of values of given size *)
 
@@ -66,7 +67,7 @@ module Shape = struct
 
   let untagged_constant n =
     let n = Nativeint.of_int n in
-    Unboxed (UntaggedInt {min= n; max= n})
+    Unboxed (UntaggedInt ("int", {min= n; max= n}))
 
   let _string_size =
     TaggedInt {min= 0; max= 1 + (Sys.max_string_length * 8 / Sys.word_size)}
@@ -81,8 +82,7 @@ module Shape = struct
 
   let int = int_range min_int max_int
 
-  let untagged_int =
-    Unboxed (UntaggedInt {min= Nativeint.min_int; max= Nativeint.max_int})
+  let untagged_int typ min max = Unboxed (UntaggedInt (typ, {min; max}))
 
   let _constructor x = Unboxed (TaggedInt {min= x; max= x})
 
@@ -149,7 +149,7 @@ module Shape = struct
     | Tobject _ ->
         obj
     | Tarrow (_, e1, e2, _) ->
-        arrow (of_type_expr e1) (of_type_expr e2)
+        arrow (e1, of_type_expr e1) (e2, of_type_expr e2)
     | Tvar _ ->
         Unknown
     | Tconstr (path, [], _) ->
@@ -163,17 +163,46 @@ module Shape = struct
         Unknown (* TODO: use constructor_description here *)
 end
 
-let rec arrow_of_shape = function
-  | Shape.Arrow (e1, e2) ->
-      Seq.append (arrow_of_shape e1) (arrow_of_shape e2)
+let basic =
+  let open Shape in
+  [
+    untagged_int "int32_t"
+      (Int32.min_int |> Nativeint.of_int32)
+      (Int32.max_int |> Nativeint.of_int32)
+  ; untagged_int "int64_t"
+      (Int64.min_int |> Int64.to_nativeint)
+      (Int64.max_int |> Int64.to_nativeint)
+  ; untagged_int "intnat" Nativeint.min_int Nativeint.max_int
+  ; int
+  ; Unboxed DoubleArrayElement
+  ; Unknown
+  ]
+
+let ctype_of_shape =
+  let open Shape in
+  function
+  | Unboxed (TaggedInt _) ->
+      "value"
+  | Unboxed (UntaggedInt (typ, _)) ->
+      typ
+  | Unboxed DoubleArrayElement ->
+      "double"
+  | Boxed _ | Exception | Variant _ | Arrow _ | Unknown ->
+      "value"
+  | Bytecode_argv _ ->
+      "value*"
+
+let rec arrow_of_shape typ = function
+  | Shape.Arrow ((t1, e1), (t2, e2)) ->
+      Seq.cons (Some t1, e1) (arrow_of_shape t2 e2)
   | shape ->
-      Seq.return shape
+      Seq.return (Some typ, shape)
 
 let get_arrow e =
-  match List.of_seq (arrow_of_shape @@ Shape.of_type_expr e) with
+  match List.of_seq (arrow_of_shape e @@ Shape.of_type_expr e) with
   | [] ->
       assert false
-  | [Unknown] ->
+  | [(_, Unknown)] ->
       None
   | [_] ->
       assert false
@@ -185,24 +214,30 @@ let get_arrow e =
 let shape_of_primitive type_expr prim =
   let open Primitives_of_cmt in
   let n = List.length prim.native_args in
-  let shape_of (shape, t) =
-    match t with
-    | Value ->
-        shape
-    | Double ->
-        Shape.float
-    | Int32 ->
-        Shape.int32
-    | Int64 ->
-        Shape.int64
-    | Intnat {untagged_int= true} ->
-        Shape.untagged_int
-    | Intnat {untagged_int= false} ->
-        Shape.int
-    | Bytecode_argv ->
-        Shape.Bytecode_argv n
-    | Bytecode_argn ->
-        Shape.untagged_constant n
+  let shape_of ((typ, shape), t) =
+    ( Option.map (Format.asprintf "%a" Printtyp.type_expr) typ
+    , match t with
+      | Value ->
+          shape
+      | Double ->
+          Shape.(Unboxed DoubleArrayElement)
+      | Int32 ->
+          Shape.untagged_int "int32_t"
+            (Int32.min_int |> Nativeint.of_int32)
+            (Int32.max_int |> Nativeint.of_int32)
+      | Int64 ->
+          Shape.untagged_int "int64_t"
+            (Int64.min_int |> Int64.to_nativeint)
+            (Int64.max_int |> Int64.to_nativeint)
+      | Intnat {untagged_int= true} ->
+          Shape.untagged_int "intnat" Nativeint.min_int Nativeint.max_int
+      | Intnat {untagged_int= false} ->
+          Shape.int
+      | Bytecode_argv ->
+          Shape.Bytecode_argv n
+      | Bytecode_argn ->
+          Shape.untagged_constant n
+    )
   in
 
   let ret_shape, args_shape =
@@ -212,7 +247,9 @@ let shape_of_primitive type_expr prim =
         shape
     | _ ->
         (* not fatal: treat them as unknown *)
-        (Shape.Unknown, prim.native_args |> List.map @@ fun _ -> Shape.Unknown)
+        ( (None, Shape.Unknown)
+        , prim.native_args |> List.map @@ fun _ -> (None, Shape.Unknown)
+        )
   in
   ( shape_of (ret_shape, prim.native_result)
   , List.combine args_shape prim.native_args |> List.map shape_of

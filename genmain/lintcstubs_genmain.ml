@@ -34,78 +34,84 @@ let usage_msg = Printf.sprintf "%s [FILE.cmt...]" Sys.executable_name
 let nondet typ = "__VERIFIER_nondet_" ^ typ
 
 let print_nondet_prototype t =
-  let open Primitives_of_cmt in
-  let ctype = ctype_of_native_arg t in
-  Printf.printf "%s %s(void);" ctype (nondet ctype)
+  let open Shapes_of_types in
+  let ctype = ctype_of_shape t in
+  Printf.printf "%s %s(void);\n" ctype (nondet ctype)
 
 let gen_of_native_arg args =
-  let open Primitives_of_cmt in
+  let open Shapes_of_types in
   function
-  (* TODO: we could do more analysis on the type for value to determine whether
-     it is an integer or not, what tag it can have, etc. *)
-  | Value as arg ->
-      (*      Format.eprintf "shape: %a@." Sexplib.Sexp.pp_hum (Shape.sexp_of_t shape) ;*)
-      nondet @@ ctype_of_native_arg arg ^ "()"
-  | (Double | Int32 | Int64 | Intnat _) as arg ->
-      nondet @@ ctype_of_native_arg arg ^ "()"
-  | Bytecode_argv ->
+  | Shape.Bytecode_argv _ ->
       Printf.sprintf "value[]{%s}"
       @@ String.concat ", "
-      @@ List.map ctype_of_native_arg args
-  | Bytecode_argn ->
-      List.length args |> string_of_int
+      @@ List.map ctype_of_shape args
+  | Shape.Unboxed (UntaggedInt (_, {min; max})) when Nativeint.equal min max ->
+      Nativeint.to_string min
+  | Shape.Unboxed (TaggedInt {min; max}) when Int.equal min max ->
+      Printf.sprintf "Val_int(%d)" min
+  | arg ->
+      nondet @@ ctype_of_shape arg ^ "()"
 
 module StringSet = Set.Make (String)
 
 let calls = ref StringSet.empty
 
-let print_call ~noalloc res name args =
+(* move this to a separate module/tool: genwrapper,
+     that generates
+       __real_foo( ... params ... );
+       __wrap_foo(..)
+       {
+       ... add some __goblint_assume here about inputs (but that get compiled away on a real program) ....
+       __real_foo()
+       ... check postconditions ...
+
+    These will need to be defined as static when in static analysis mode, and global otherwise (use some macro at the beginning to do that..., e.g. WRAP and REAL)
+
+    Then use '-ccopt -Wl,-wrap -ccopt <symbol>' for all symbols to redirect symbols through the checker for runtime checking.
+
+    For static analysis generate a 2nd file that we can include in the first that redefines __real_foo = foo
+
+     Also generate some __call_foo that calls __wrap_foo(...) with some nondet code depending on the input type,
+   like what genmain does now
+   }
+*)
+
+let print_c_call _res name args =
   let open Printf in
   if not @@ StringSet.mem name !calls then (
     calls := StringSet.add name !calls ;
+    let args = List.map snd args in
     printf "static void __call_%s(void) {\n" name ;
-    if noalloc then
-      printf "\tCAMLnoalloc;\n" ;
-    printf "\t%s res = %s(%s);\n"
-      (Primitives_of_cmt.ctype_of_native_arg res)
-      name
+    printf "\t(void)__wrap_%s(%s);\n" name
     @@ String.concat ", "
     @@ List.map (gen_of_native_arg args) args ;
-    let () =
-      match res with
-      | Value ->
-          printf "\t__access_Val(res);\n"
-      | _ ->
-          (* check that the value is valid *)
-          (* TODO: could insert more assertions based on actual type *)
-          printf "\t(void)res;\n"
-    in
     (*  suppress unused value warning *)
     print_endline "}"
   )
 
-let print_c_prototype ~noalloc res name args = print_call ~noalloc res name args
+let unknown = (None, Shapes_of_types.Shape.Unknown)
 
-let print_c_prototype_arity arity byte_name =
-  let open Primitives_of_cmt in
-  print_c_prototype Value byte_name @@ List.init arity (fun _ -> Value)
+let print_c_call_arity arity byte_name =
+  print_c_call unknown byte_name @@ List.init arity (fun _ -> unknown)
 
 let primitive_description type_expr desc =
   let open Primitives_of_cmt in
-  let _ret, _args = Shapes_of_types.shape_of_primitive type_expr desc in
+  let ret, args = Shapes_of_types.shape_of_primitive type_expr desc in
   (* TODO:use ret and args *)
   (* TODO: a .t that covers all primitive types supported in shapes *)
   (* print native first *)
-  let noalloc = not desc.alloc in
-  print_c_prototype ~noalloc desc.native_result desc.native_name
-    desc.native_args ;
+  print_c_call ret desc.native_name args ;
   (* if the bytecode one is different, print it *)
   if desc.native_name <> desc.byte_name then
     if desc.arity <= 5 then
-      print_c_prototype_arity ~noalloc desc.arity desc.byte_name
+      print_c_call_arity desc.arity desc.byte_name
     else
-      print_c_prototype ~noalloc Value desc.byte_name
-        [Bytecode_argv; Bytecode_argn]
+      let open Shapes_of_types in
+      print_c_call unknown desc.byte_name
+        [
+          (None, Shape.Bytecode_argv desc.arity)
+        ; (None, Shape.untagged_constant desc.arity)
+        ]
   else
     (* according to https://v2.ocaml.org/manual/intfc.html#ss:c-prim-impl
        if the primitive takes more than 5 arguments then bytecode and native
@@ -130,6 +136,7 @@ let print_call_all () =
   print_endline "\tdefault: __caml_maybe_run_gc(); break;" ;
   print_endline "\t}" ;
   print_endline "\tcaml_enter_blocking_section();" ;
+  print_endline "\treturn NULL;" ;
   print_endline "}" ;
 
   print_endline "" ;
@@ -158,36 +165,11 @@ let () =
   print_endline {|#include "primitives.h"|} ;
   print_endline {|#include <goblint.h>|} ;
   print_endline {|#include "caml/threads.h"|} ;
-  Printf.printf
-    {|
-#ifndef CAMLnoalloc
-/* GC status assertions.
-
-   CAMLnoalloc at the start of a block means that the GC must not be
-   invoked during the block. */
-#if defined(__GNUC__) && defined(DEBUG)
-int caml_noalloc_begin(void);
-void caml_noalloc_end(int*);
-void caml_alloc_point_here(void);
-#define CAMLnoalloc                          \
-  int caml__noalloc                          \
-  __attribute__((cleanup(caml_noalloc_end),unused)) \
-    = caml_noalloc_begin()
-#define CAMLalloc_point_here (caml_alloc_point_here())
-#else
-#define CAMLnoalloc
-#define CAMLalloc_point_here ((void)0)
-#endif
-#endif
-    |} ;
 
   let () =
     (* TODO: put in a header *)
     Printf.printf "int __VERIFIER_nondet_int(void);\n" ;
-    Printf.printf "void __access_Val(value);\n" ;
-    Primitives_of_cmt.
-      [Value; Double; Int32; Int64; Intnat {untagged_int= false}]
-    |> List.iter @@ fun t -> print_nondet_prototype t
+    Shapes_of_types.basic |> List.iter @@ fun t -> print_nondet_prototype t
   in
   print_endline "void __caml_maybe_run_gc(void);" ;
   Primitives_of_cmt.with_report_exceptions @@ fun () ->
