@@ -582,7 +582,7 @@ If we are on Linux then test '-wrap':
   > ocamlc -custom test.ml call.ml test_wrap.o test_stubs.o -ccopt -Wl,-wrap,caml_ml_seek_in2,-wrap,closure_test,-wrap,stub_type_test_byte,-wrap,stub_type_test_nat,-wrap,stub_type_test_byte_res,-wrap,stub_type_test_nat_res -o call.byte;
   > ./call.byte;
   > if command ocamlopt 2>/dev/null; then
-  >   ocamlopt test.ml call.ml test_wrap.o test_stubs.o -ccopt -Wl,-wrap,caml_ml_seek_in2,-wrap,closure_test,-wrap,stub_type_test_byte,-wrap,stub_type_test_nat,-wrap,stub_type_test_byte_res,-wrap,stub_type_test_nat_res -o call.nat;
+  >   ocamlopt -ccopt -no-pie test.ml call.ml test_wrap.o test_stubs.o -ccopt -Wl,-wrap,caml_ml_seek_in2,-wrap,closure_test,-wrap,stub_type_test_byte,-wrap,stub_type_test_nat,-wrap,stub_type_test_byte_res,-wrap,stub_type_test_nat_res -o call.nat;
   >   ./call.nat;
   > fi
   > fi
