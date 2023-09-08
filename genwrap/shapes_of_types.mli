@@ -4,7 +4,7 @@ module Shape : sig
 
   type unboxed =
     | TaggedInt of int range
-    | UntaggedInt of string * nativeint range
+    | UntaggedInt of string * int64 range
     | DoubleArrayElement
 
   (** memory layout and value range of an OCaml type *)

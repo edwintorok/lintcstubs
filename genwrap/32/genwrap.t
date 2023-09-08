@@ -1,4 +1,7 @@
 TODO: records, variants, polymorphic variant, objects
+FAIL:
+  $ false
+  [1]
 
 Test primitive types:
   $ cat >test.ml <<EOF
@@ -178,19 +181,19 @@ Test primitive types:
      ASSERT_ARG(Is_in_value_area(arg2));
      ASSERT_ARG(String_tag == Tag_val(arg2));
      ASSERT_ARG(1 <= Wosize_val(arg2));
-     ASSERT_ARG(Wosize_val(arg2) <= 18014398509481983UL);
+     ASSERT_ARG(Wosize_val(arg2) <= 4194303UL);
      
      /* bytes */
      ASSERT_ARG(Is_block(arg3));
      ASSERT_ARG(Is_in_value_area(arg3));
      ASSERT_ARG(String_tag == Tag_val(arg3));
      ASSERT_ARG(1 <= Wosize_val(arg3));
-     ASSERT_ARG(Wosize_val(arg3) <= 18014398509481983UL);
+     ASSERT_ARG(Wosize_val(arg3) <= 4194303UL);
      
      /* float */
      ASSERT_ARG(Is_block(arg4));
      ASSERT_ARG(Is_in_value_area(arg4));
-     ASSERT_ARG(1 == Wosize_val(arg4));
+     ASSERT_ARG(2 == Wosize_val(arg4));
      ASSERT_ARG(Double_tag == Tag_val(arg4));
      
      /* Float.Array.t */
@@ -214,7 +217,7 @@ Test primitive types:
      /* int64 */
      ASSERT_ARG(Is_block(arg8));
      ASSERT_ARG(Is_in_value_area(arg8));
-     ASSERT_ARG(2 == Wosize_val(arg8));
+     ASSERT_ARG(3 == Wosize_val(arg8));
      ASSERT_ARG(Custom_tag == Tag_val(arg8));
      
      /* nativeint */
@@ -248,7 +251,7 @@ Test primitive types:
      
      ASSERT_ARG(Is_block(arg13_1));
      ASSERT_ARG(Is_in_value_area(arg13_1));
-     ASSERT_ARG(1 == Wosize_val(arg13_1));
+     ASSERT_ARG(2 == Wosize_val(arg13_1));
      ASSERT_ARG(Double_tag == Tag_val(arg13_1));
      
      /* int array */
@@ -282,6 +285,8 @@ Test primitive types:
      ASSERT_ARG(Is_long(arg20));
      
      /* int */
+     ASSERT_ARG((intnat)-2147483648L <= arg21);
+     ASSERT_ARG(arg21 <= (intnat)2147483647L);
      
      value res = __REAL(stub_type_test_nat)(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21);
      
@@ -353,19 +358,19 @@ Test primitive types:
      ASSERT_RES(Is_in_value_area(res_2));
      ASSERT_RES(String_tag == Tag_val(res_2));
      ASSERT_RES(1 <= Wosize_val(res_2));
-     ASSERT_RES(Wosize_val(res_2) <= 18014398509481983UL);
+     ASSERT_RES(Wosize_val(res_2) <= 4194303UL);
      value res_3 = Field(res, 3);
      
      ASSERT_RES(Is_block(res_3));
      ASSERT_RES(Is_in_value_area(res_3));
      ASSERT_RES(String_tag == Tag_val(res_3));
      ASSERT_RES(1 <= Wosize_val(res_3));
-     ASSERT_RES(Wosize_val(res_3) <= 18014398509481983UL);
+     ASSERT_RES(Wosize_val(res_3) <= 4194303UL);
      value res_4 = Field(res, 4);
      
      ASSERT_RES(Is_block(res_4));
      ASSERT_RES(Is_in_value_area(res_4));
-     ASSERT_RES(1 == Wosize_val(res_4));
+     ASSERT_RES(2 == Wosize_val(res_4));
      ASSERT_RES(Double_tag == Tag_val(res_4));
      value res_5 = Field(res, 5);
      
@@ -389,7 +394,7 @@ Test primitive types:
      
      ASSERT_RES(Is_block(res_8));
      ASSERT_RES(Is_in_value_area(res_8));
-     ASSERT_RES(2 == Wosize_val(res_8));
+     ASSERT_RES(3 == Wosize_val(res_8));
      ASSERT_RES(Custom_tag == Tag_val(res_8));
      value res_9 = Field(res, 9);
      
@@ -423,7 +428,7 @@ Test primitive types:
      
      ASSERT_RES(Is_block(res_13_1));
      ASSERT_RES(Is_in_value_area(res_13_1));
-     ASSERT_RES(1 == Wosize_val(res_13_1));
+     ASSERT_RES(2 == Wosize_val(res_13_1));
      ASSERT_RES(Double_tag == Tag_val(res_13_1));
      value res_14 = Field(res, 14);
      
@@ -552,7 +557,7 @@ Test that runtime wrapping works when the code has no errors:
   >    Store_field(result, 13, pair);
   >    Store_field(result, 14, ia);
   >    Store_field(result, 15, i32a);
-  >    Store_field(result, 17, cl);
+  >    Store_field(result, 16, cl);
   >    Store_field(result, 17, Val_int(0));
   > 
   >    CAMLreturn(result);
@@ -573,8 +578,11 @@ Test that runtime wrapping works when the code has no errors:
   > EOF
 
 If we are on Linux then test '-wrap':
-  $ ([ $(uname) = "Linux" ] && ocamlc -custom test.ml call.ml test_wrap.o test_stubs.o -ccopt -Wl,-wrap,caml_ml_seek_in2,-wrap,closure_test,-wrap,stub_type_test_byte,-wrap,stub_type_test_nat,-wrap,stub_type_test_byte_res,-wrap,stub_type_test_nat_res -o call.byte) || :
-  $ ([ $(uname) = "Linux" ] && ocamlopt test.ml call.ml test_wrap.o test_stubs.o -ccopt -Wl,-wrap,caml_ml_seek_in2,-wrap,closure_test,-wrap,stub_type_test_byte,-wrap,stub_type_test_nat,-wrap,stub_type_test_byte_res,-wrap,stub_type_test_nat_res -o call.nat) || :
-  $ ([ $(uname) = "Linux" ] && ./call.byte) || :
-  $ ([ $(uname) = "Linux" ] && ./call.nat) || :
-
+  $ if [ $(uname) = "Linux" ]; then
+  > ocamlc -custom test.ml call.ml test_wrap.o test_stubs.o -ccopt -Wl,-wrap,caml_ml_seek_in2,-wrap,closure_test,-wrap,stub_type_test_byte,-wrap,stub_type_test_nat,-wrap,stub_type_test_byte_res,-wrap,stub_type_test_nat_res -o call.byte;
+  > ./call.byte;
+  > if command ocamlopt; then
+  >   ocamlopt test.ml call.ml test_wrap.o test_stubs.o -ccopt -Wl,-wrap,caml_ml_seek_in2,-wrap,closure_test,-wrap,stub_type_test_byte,-wrap,stub_type_test_nat,-wrap,stub_type_test_byte_res,-wrap,stub_type_test_nat_res -o call.nat;
+  >   ./call.nat;
+  > fi
+  > fi

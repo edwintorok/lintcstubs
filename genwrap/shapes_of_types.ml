@@ -36,8 +36,7 @@ module Shape = struct
   (** Integers and float array elements are stored directly in values *)
   type unboxed =
     | TaggedInt of int range  (** OCaml integer with given range *)
-    | UntaggedInt of string * nativeint range
-        (** OCaml integer with given range *)
+    | UntaggedInt of string * int64 range  (** OCaml integer with given range *)
     | DoubleArrayElement  (** An unboxed float array element *)
 
   (** information about the size and layout of an OCaml type *)
@@ -66,7 +65,7 @@ module Shape = struct
   (*  | Self of {levels:int} *)
 
   let untagged_constant n =
-    let n = Nativeint.of_int n in
+    let n = Int64.of_int n in
     Unboxed (UntaggedInt ("int", {min= n; max= n}))
 
   let _string_size =
@@ -167,12 +166,12 @@ let basic =
   let open Shape in
   [
     untagged_int "int32_t"
-      (Int32.min_int |> Nativeint.of_int32)
-      (Int32.max_int |> Nativeint.of_int32)
-  ; untagged_int "int64_t"
-      (Int64.min_int |> Int64.to_nativeint)
-      (Int64.max_int |> Int64.to_nativeint)
-  ; untagged_int "intnat" Nativeint.min_int Nativeint.max_int
+      (Int32.min_int |> Int64.of_int32)
+      (Int32.max_int |> Int64.of_int32)
+  ; untagged_int "int64_t" Int64.min_int Int64.max_int
+  ; untagged_int "intnat"
+      (Int64.of_nativeint Nativeint.min_int)
+      (Int64.of_nativeint Nativeint.max_int)
   ; int
   ; Unboxed DoubleArrayElement
   ; Unknown
@@ -223,14 +222,14 @@ let shape_of_primitive type_expr prim =
           Shape.(Unboxed DoubleArrayElement)
       | Int32 ->
           Shape.untagged_int "int32_t"
-            (Int32.min_int |> Nativeint.of_int32)
-            (Int32.max_int |> Nativeint.of_int32)
+            (Int32.min_int |> Int64.of_int32)
+            (Int32.max_int |> Int64.of_int32)
       | Int64 ->
-          Shape.untagged_int "int64_t"
-            (Int64.min_int |> Int64.to_nativeint)
-            (Int64.max_int |> Int64.to_nativeint)
+          Shape.untagged_int "int64_t" Int64.min_int Int64.max_int
       | Intnat {untagged_int= true} ->
-          Shape.untagged_int "intnat" Nativeint.min_int Nativeint.max_int
+          Shape.untagged_int "intnat"
+            (Int64.of_nativeint Nativeint.min_int)
+            (Int64.of_nativeint Nativeint.max_int)
       | Intnat {untagged_int= false} ->
           Shape.int
       | Bytecode_argv ->

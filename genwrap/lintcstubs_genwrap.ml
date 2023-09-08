@@ -165,7 +165,7 @@ let rec assert_type value shape =
       print_assert value "Is_in_value_area(%s)" name ;
       printf "(void)Tag_val(%s);@]@,}@," name
   | Boxed Double ->
-      assert_block value ~words:1 ~tag:"Double_tag" name
+      assert_block value ~words:(64 / Sys.word_size) ~tag:"Double_tag" name
   | Shape.Boxed Int32 ->
       assert_block value ~words:2 ~tag:"Custom_tag" name
   | Shape.Boxed (IntN {words}) ->
@@ -210,13 +210,13 @@ let rec assert_type value shape =
           print_assert value "Long_val(%s) <= %dL" name range.max
       )
   | Unboxed (UntaggedInt (typ, range)) ->
-      if Nativeint.equal range.min range.max then
-        print_assert value "(%s)%ndL == %s" typ range.min name
+      if Int64.equal range.min range.max then
+        print_assert value "(%s)%LdL == %s" typ range.min name
       else (
-        if not (Nativeint.equal range.min Nativeint.min_int) then
-          print_assert value "(%s)%ndL <= %s" typ range.min name ;
-        if not (Nativeint.equal range.max Nativeint.max_int) then
-          print_assert value "%s <= (%s)%ndL" name typ range.max
+        if not (Int64.equal range.min Int64.min_int) then
+          print_assert value "(%s)%LdL <= %s" typ range.min name ;
+        if not (Int64.equal range.max Int64.max_int) then
+          print_assert value "%s <= (%s)%LdL" name typ range.max
       )
   | Bytecode_argv n ->
       print_assert value "%s" name ;

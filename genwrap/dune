@@ -13,10 +13,6 @@
  (libraries lintcstubs-arity.primitives_of_cmt shapes_of_types)
  (package lintcstubs-gen))
 
-(cram
- (deps %{bin:lintcstubs_genwrap} %{bin:lintcstubs_arity_cmt})
- (package lintcstubs-gen))
-
 (rule
  (target genwrap_test.model.c)
  (deps
@@ -57,7 +53,3 @@
   (flags
    (:standard -Werror-implicit-function-declaration -Wall))
   (names genwrap_test.model)))
-
-(cram
- (package lintcstubs-gen)
- (deps %{bin:lintcstubs_genwrap}))

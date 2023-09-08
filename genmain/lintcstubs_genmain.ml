@@ -45,8 +45,8 @@ let gen_of_native_arg args =
       Printf.sprintf "value[]{%s}"
       @@ String.concat ", "
       @@ List.map ctype_of_shape args
-  | Shape.Unboxed (UntaggedInt (_, {min; max})) when Nativeint.equal min max ->
-      Nativeint.to_string min
+  | Shape.Unboxed (UntaggedInt (_, {min; max})) when Int64.equal min max ->
+      Int64.to_string min
   | Shape.Unboxed (TaggedInt {min; max}) when Int.equal min max ->
       Printf.sprintf "Val_int(%d)" min
   | arg ->

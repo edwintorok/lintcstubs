@@ -1,0 +1,5 @@
+(cram
+ (enabled_if %{arch_sixtyfour})
+ (deps %{bin:lintcstubs_genwrap} %{bin:lintcstubs_arity_cmt} genwrap.t)
+ (package lintcstubs-gen)
+)
