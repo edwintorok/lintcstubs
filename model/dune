@@ -25,5 +25,6 @@
  (deps
   %{bin:lintcstubs_genwrap}
   %{bin:lintcstubs_arity_cmt}
+  %{bin:goblint}
   ocaml_runtime.model.c)
  (package lintcstubs))

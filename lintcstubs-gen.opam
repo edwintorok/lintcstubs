@@ -12,6 +12,7 @@ depends: [
   "dune" {>= "3.0"}
   "ocaml" {>= "4.14"}
   "lintcstubs-arity" {>= "0.2.2"}
+  "goblint-cil.all-features"
   "odoc" {with-doc}
 ]
 build: [
