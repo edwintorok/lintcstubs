@@ -1,0 +1,47 @@
+{
+    "ana": {
+        "activated": [
+            "expRelation",
+            "base",
+            "threadid",
+            "threadflag",
+            "threadreturn",
+            "escape",
+            "mutexEvents",
+            "mutex",
+            "access",
+            "race",
+            "mallocWrapper",
+            "mhp",
+            "assert",
+            "var_eq",
+            "symb_locks",
+            "region",
+            "thread",
+            "threadJoins"
+        ],
+        "int": {
+            "interval": true
+        },
+        "autotune": {
+            "enabled": true,
+            "activated": [
+                "mallocWrappers",
+                "noRecursiveIntervals",
+                "enums",
+                "congruence",
+                "octagon",
+                "wideningThresholds"
+              ]
+        }
+    },
+    "warn": {
+        "integer": false,
+        "behavior": false,
+        "deadcode": false,
+        "unsound": false,
+        "imprecise": false,
+        "info": false,
+        "success": false
+    }
+}

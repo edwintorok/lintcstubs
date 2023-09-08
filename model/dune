@@ -11,8 +11,6 @@
  (package lintcstubs))
 
 (install
- (enabled_if
-  (= %{os_type} linux))
  (section
   (site
    ; TODO: dev version of dune has a different site declared

@@ -19,7 +19,6 @@
  (depends
   (ocaml (>= 4.14))
   (lintcstubs-arity (>= 0.2.2))
-  goblint-cil.all-features
  )
 )
 

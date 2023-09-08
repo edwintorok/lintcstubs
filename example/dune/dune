@@ -1,0 +1,70 @@
+(library
+ (name foo)
+ (foreign_stubs
+  (language c)
+  (names foostubs)))
+
+; run lintcstubs_arity_cmt to generate the header file
+
+(rule
+ (action
+  (with-stdout-to
+   foo.h
+   (run %{bin:lintcstubs_arity_cmt} %{dep:.foo.objs/byte/foo.cmt}))))
+
+(rule
+ ; editor integration: generate include paths for LSPs such as clangd
+ (target compile_flags.txt)
+ (mode promote)
+ (enabled_if
+  (= %{system} linux))
+ (action
+  (with-stdout-to
+   compile_flags.txt
+   (pipe-stdout
+    (progn
+     (echo "-Wall -Wextra -Wstrict-prototypes -D_FORTIFY_SOURCE=2 ")
+     (echo
+      %{ocaml-config:ocamlc_cppflags}
+      %{ocaml-config:ocamlc_cflags}
+      -I%{ocaml_where}
+      -I)
+     (system pwd))
+    (system "xargs -n1 echo") ; the format is a single flag per line
+    ))))
+
+(rule
+ (with-stdout-to
+  primitives.model.c
+  (progn
+   (run %{bin:lintcstubs_genwrap} %{dep:.foo.objs/byte/foo.cmt})
+   (run %{bin:lintcstubs_genmain} %{dep:.foo.objs/byte/foo.cmt}))))
+
+(rule
+ (action
+  (with-stdout-to
+   primitives.h
+   (run %{bin:lintcstubs_arity_cmt} %{dep:.foo.objs/byte/foo.cmt}))))
+
+(rule
+ (target foo.sarif)
+ (deps foo.h primitives.h)
+ (action
+  (with-stdout-to
+   foo.log
+   (run
+    %{bin:lintcstubs}
+    --conf
+    lintcstubs.json
+    %{dep:foostubs.c}
+    %{dep:primitives.model.c}
+    -I
+    %{ocaml_where}
+    -o
+    %{target}))))
+
+(rule
+ (alias runtest)
+ (deps foo.log)
+ (action
+  (diff foo.log.reference %{deps})))

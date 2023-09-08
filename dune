@@ -1,0 +1,23 @@
+(executable
+ (public_name lintcstubs)
+ (libraries lintcstubs_analysis goblint.sites.dune)
+ (flags :standard -linkall)
+ (package lintcstubs))
+
+; the 'package' *is* a dependency: we want access to the file installed into
+; the goblint 'site'
+; but also this test is part of a package, hence we need to specify it twice
+
+(install
+ (section
+  (site
+   (goblint conf)))
+ (files lintcstubs.json)
+ (package lintcstubs))
+
+(cram
+ (deps
+  %{bin:lintcstubs}
+  (package lintcstubs)
+  model/ocaml_runtime.model.c)
+ (package lintcstubs))

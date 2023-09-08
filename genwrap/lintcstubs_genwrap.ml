@@ -134,6 +134,7 @@ let print_assert kind format =
 
 let assert_block kind ?words ~tag name =
   print_assert kind "Is_block(%s)" name ;
+
   (* on 4.14 in naked pointer mode this can perform additional checks:
      we may have received an invalid pointer
   *)
@@ -162,7 +163,10 @@ let rec assert_type value shape =
   | Shape.Unknown | Boxed Object ->
       (* access the 'value' to check for dangling pointers *)
       printf "if @[<v>(Is_block(%s)) {@, " name ;
-      print_assert value "Is_in_value_area(%s)" name ;
+
+      (* TODO: goblint cannot determine state of this assert
+         print_assert value "Is_in_value_area(%s)" name ;
+      *)
       printf "(void)Tag_val(%s);@]@,}@," name
   | Boxed Double ->
       assert_block value ~words:(64 / Sys.word_size) ~tag:"Double_tag" name

@@ -1,3 +1,7 @@
+## 0.4.0 (2023-09-09)
+
+* Import static analyzer
+
 ## 0.3.3 (2023-09-08)
 
 * Fix 32-bit and bytecode-only compatibility

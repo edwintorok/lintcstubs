@@ -34,7 +34,8 @@ The generated main function also makes it explicit that these functions are invo
 
 * only some very basic shapes are supported currently (primitive types, arrays, tuples). When the shape is unknown no assertion check is done for that parameter/field.
 * Is_block() tracking isn't precise for allocated values
-* `lintcstubs` not yet in this repository, to be added soon
+* write some examples
+* show example on how to use with GobPie
 
 # Usage:
 
@@ -56,9 +57,9 @@ You can also create one manually (add include and `ocamlfind` flags as necessary
 ocamlc -bin-annot -c ocamlfile.ml
 ```
 
-Then run your static analyzer (in this case `goblint`):
+Then run your static analyzer (in this case the  `goblint` based `lintcstubs`):
 ```
-goblint --set 'sem.int.signed_overflow' 'assume_wraparound' -I $(ocamlc -where) --disable warn.integer --disable warn.info --disable warn.deadcode test_analyze.c ocamlfile_stubs.c
+lintcstubs --disable warn.integer --disable warn.info --disable warn.deadcode test_analyze.c ocamlfile_stubs.c
 ```
 
 Where `ocamlfile_stubs.c` is your C primitives implementation corresponding to `ocamlfile.ml`.
