@@ -1,10 +1,24 @@
 ; compiler-libs has unstable API, ensure only one module uses it to simplify
 ; maintenance
 
+(rule
+ (target get_desc.ml)
+ (enabled_if
+  (>= %{ocaml_version} 4.14))
+ (action
+  (copy get_desc.414.ml %{target})))
+
+(rule
+ (target get_desc.ml)
+ (enabled_if
+  (< %{ocaml_version} 4.14))
+ (action
+  (copy get_desc.413.ml %{target})))
+
 (library
  (package lintcstubs-gen)
  (name shapes_of_types)
- (modules shapes_of_types)
+ (modules shapes_of_types get_desc)
  (libraries compiler-libs.common lintcstubs-arity.primitives_of_cmt))
 
 (executable

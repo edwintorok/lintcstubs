@@ -1,4 +1,5 @@
 (library
+ (package lintcstubs)
  (name foo)
  (foreign_stubs
   (language c)
@@ -7,6 +8,7 @@
 ; run lintcstubs_arity_cmt to generate the header file
 
 (rule
+ (enabled_if %{bin-available:lintcstubs})
  (action
   (with-stdout-to
    foo.h
@@ -34,13 +36,16 @@
     ))))
 
 (rule
+ (enabled_if %{bin-available:lintcstubs})
+ (action
  (with-stdout-to
   primitives.model.c
   (progn
    (run %{bin:lintcstubs_genwrap} %{dep:.foo.objs/byte/foo.cmt})
-   (run %{bin:lintcstubs_genmain} %{dep:.foo.objs/byte/foo.cmt}))))
+   (run %{bin:lintcstubs_genmain} %{dep:.foo.objs/byte/foo.cmt})))))
 
 (rule
+ (enabled_if %{bin-available:lintcstubs})
  (action
   (with-stdout-to
    primitives.h
@@ -48,6 +53,7 @@
 
 (rule
  (target foo.sarif)
+ (enabled_if %{bin-available:lintcstubs})
  (deps foo.h primitives.h)
  (action
   (with-stdout-to
@@ -65,6 +71,7 @@
 
 (rule
  (alias runtest)
+ (package lintcstubs)
  (deps foo.log)
  (action
   (diff foo.log.reference %{deps})))

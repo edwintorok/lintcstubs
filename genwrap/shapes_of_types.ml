@@ -142,7 +142,7 @@ module Shape = struct
     |> Path.Map.of_seq
 
   let rec of_type_expr e =
-    match Types.get_desc e with
+    match Get_desc.get_desc e with
     | Ttuple lst ->
         tuple (List.map of_type_expr lst)
     | Tobject _ ->

@@ -1,4 +1,5 @@
 (library
+ (package lintcstubs)
  (name lintcstubs_analysis)
  (flags
   (:standard -open Goblint_lib))

@@ -27,7 +27,7 @@
  (synopsis "OCaml C stub static analyzer")
  (description "Uses a generated C model for how OCaml C primitives can be called. Run a static analyzer to find incorrect API/macro usage that leads to race conditions.")
  (depends
-  (ocaml (>= 4.14))
+  (ocaml (>= 4.13))
   (lintcstubs-gen (= :version))
   (goblint (>= 2.1.0))
  )

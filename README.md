@@ -9,7 +9,7 @@ These are a suite of tools for finding bugs in OCaml C stubs.
 * `lintcstubs_genmain` generates a `main` function that spawns threads and calls all C primitives.
 * `lintcstubs` a tool containing a static analysis pass for detecting race conditions from the incorrect use of the OCaml runtime lock
 
-Currently they require OCaml 4.14+.
+Currently they require OCaml 4.13+.
 
 # Installation
 
