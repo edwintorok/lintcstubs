@@ -1,4 +1,4 @@
-## 0.4.2 (2023-09-09)
+## 0.4.3 (2023-09-09)
 
 * helpers tools and examples added
 

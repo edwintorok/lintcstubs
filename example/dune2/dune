@@ -1,0 +1,24 @@
+(library
+ (package lintcstubs)
+ (name foo2)
+ (foreign_stubs
+  (language c)
+  (names foostubs)))
+
+(include dune.analysis.inc)
+
+(rule
+ (deps
+  (:mlfiles
+   (glob_files_rec *.ml))
+  (:cfiles
+   (glob_files_rec *.c)))
+ (action
+  (with-stdout-to
+   dune.analysis.inc.gen
+   (run %{bin:lintcstubs-dune-rules} %{mlfiles} %{cfiles}))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff dune.analysis.inc dune.analysis.inc.gen)))
