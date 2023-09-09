@@ -1,6 +1,7 @@
 (lang dune 3.0)
 (cram enable)
 (using dune_site 0.1)
+(using action-plugin 0.1)
 
 (generate_opam_files)
 (name lintcstubs)
@@ -35,3 +36,16 @@
   (fmt (>= 0.9.0))
  )
 )
+
+(package
+ (name lintcstubs-rules)
+ (synopsis "Generate dune rules for lintcstubs integration")
+ (description "Generates dune rules for running the static analyzer")
+ (depends
+  (ocaml (>= 4.14))
+  (lintcstubs-arity (>= 0.2.2))
+  (lintcstubs-gen (= :version))
+  (lintcstubs (= :version))
+ )
+)
+

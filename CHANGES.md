@@ -1,3 +1,7 @@
+## 0.4.1 (2023-09-09)
+
+* helpers tools and examples added
+
 ## 0.4.0 (2023-09-09)
 
 * Import static analyzer
