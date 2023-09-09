@@ -30,5 +30,8 @@
   (ocaml (>= 4.13))
   (lintcstubs-gen (= :version))
   (goblint (>= 2.1.0))
+  goblint-cil
+  fpath
+  (fmt (>= 0.9.0))
  )
 )
