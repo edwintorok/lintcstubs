@@ -10,7 +10,7 @@ let rec apply_template var subst = function
 
 let rec apply_template' var subst = function
   | Atom x when String.equal x var ->
-    Atom (Fpath.to_string subst)
+      Atom (Fpath.to_string subst)
   | Atom _ as a ->
       a
   | List l ->
@@ -38,12 +38,13 @@ let cmt_rule =
 
 let cstubs_alias_rule =
   (* for BEAR *)
-  Sexplib.Sexp.of_string {| (rule (alias cstubs) (deps (:ofiles)) (action (echo "for BEAR"))) |}
+  Sexplib.Sexp.of_string
+    {| (rule (alias cstubs) (deps (:ofiles)) (action (echo "for BEAR"))) |}
 
 (* can be long running, ensure we see something when running dune with '--no-buffer',
-   add a 2nd debug target
+    add a 2nd debug target
 
-  depend on (package) to get all files installed, e.g. json conf files
+   depend on (package) to get all files installed, e.g. json conf files
 *)
 let analyze_rule =
   Sexplib.Sexp.of_string
@@ -61,7 +62,7 @@ let analyze_rule =
 
 let analyze_alias_rule =
   Sexplib.Sexp.of_string
-  {|
+    {|
     (rule
       (alias analyze)
       (deps (:log))
@@ -120,17 +121,17 @@ let () =
      let primitives_file = Fpath.(dir / "primitives.h") in
      let model_files = mls |> Fpath.Set.map (Fpath.set_ext "model.c") in
      let cmt_rules =
-         List.of_seq
-            (mls
-            |> Fpath.Set.to_seq
-            |> Seq.map @@ fun mlfile ->
-               let cmt_file = to_cmtfile mlfile in
-               let model_file = Fpath.set_ext "model.c" mlfile in
-               cmt_rule
-               |> apply_template ":cmt" [cmt_file]
-               |> apply_template' "%{primitives}" primitives_file
-               |> apply_template' "%{model}" model_file
-            )
+       List.of_seq
+         (mls
+         |> Fpath.Set.to_seq
+         |> Seq.map @@ fun mlfile ->
+            let cmt_file = to_cmtfile mlfile in
+            let model_file = Fpath.set_ext "model.c" mlfile in
+            cmt_rule
+            |> apply_template ":cmt" [cmt_file]
+            |> apply_template' "%{primitives}" primitives_file
+            |> apply_template' "%{model}" model_file
+         )
      in
      let o_files_in_dir =
        Fpath.Map.find dir o_files |> Option.value ~default:Fpath.Set.empty
@@ -150,12 +151,12 @@ let () =
        |> apply_template ":model" (Fpath.Set.to_seq model_files |> List.of_seq)
      in
      let analyze_alias_rule =
-       analyze_alias_rule
-       |> apply_template ":log" [log_file]
+       analyze_alias_rule |> apply_template ":log" [log_file]
      in
-     cmt_rules |> List.iter @@ fun cmt_rule ->
-     Format.printf "%a@." Sexplib.Sexp.pp_hum cmt_rule ;
-     if not (Fpath.Set.is_empty o_files_in_dir) then
-       Format.printf "%a@." Sexplib.Sexp.pp_hum cstubs_alias_rules ;
-     Format.printf "%a@." Sexplib.Sexp.pp_hum analyze_rule;
-     Format.printf "%a@." Sexplib.Sexp.pp_hum analyze_alias_rule
+     cmt_rules
+     |> List.iter @@ fun cmt_rule ->
+        Format.printf "%a@." Sexplib.Sexp.pp_hum cmt_rule ;
+        if not (Fpath.Set.is_empty o_files_in_dir) then
+          Format.printf "%a@." Sexplib.Sexp.pp_hum cstubs_alias_rules ;
+        Format.printf "%a@." Sexplib.Sexp.pp_hum analyze_rule ;
+        Format.printf "%a@." Sexplib.Sexp.pp_hum analyze_alias_rule
