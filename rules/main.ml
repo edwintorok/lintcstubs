@@ -20,6 +20,7 @@ let cmt_rule =
   Sexplib.Sexp.of_string
     {|
     (rule
+      (enabled_if %{bin-available:lintcstubs_genmain})
       (targets %{model} %{primitives})
       (deps (:cmt) %{bin:lintcstubs_arity_cmt} %{bin:lintcstubs_genwrap} %{bin:lintcstubs_genmain})
       (action
@@ -50,6 +51,7 @@ let analyze_rule =
   Sexplib.Sexp.of_string
     {|
     (rule
+      (enabled_if %{bin-available:lintcstubs})
       (targets %{log} %{sarif})
       (deps compile_commands.json (:primitives) (:model) %{bin:lintcstubs} (package lintcstubs))
       (action

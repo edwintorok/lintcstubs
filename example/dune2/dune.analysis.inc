@@ -1,4 +1,5 @@
-(rule (targets foo2.model.c ./primitives.h)
+(rule (enabled_if %{bin-available:lintcstubs_genmain})
+ (targets foo2.model.c ./primitives.h)
  (deps (:cmt ./.foo2.objs/byte/foo2.cmt) %{bin:lintcstubs_arity_cmt}
   %{bin:lintcstubs_genwrap} %{bin:lintcstubs_genmain})
  (action
@@ -9,7 +10,8 @@
      (run %{bin:lintcstubs_genmain} %{cmt}))))))
 (rule (alias cstubs) (deps (:ofiles foo2.model.o foostubs.o))
  (action (echo "for BEAR")))
-(rule (targets ./lintcstubs.log ./lintcstubs.sarif)
+(rule (enabled_if %{bin-available:lintcstubs})
+ (targets ./lintcstubs.log ./lintcstubs.sarif)
  (deps compile_commands.json (:primitives ./primitives.h)
   (:model foo2.model.c) %{bin:lintcstubs} (package lintcstubs))
  (action
