@@ -29,7 +29,7 @@ jobs:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: true
 
-      - run: opam pin --dev lintcstubs-arity
+      - run: opam pin add lintcstubs-arity.0.2.2 https://github.com/edwintorok/lintcstubs-arity.git
       
       - run: opam install . --deps-only --with-test
 
