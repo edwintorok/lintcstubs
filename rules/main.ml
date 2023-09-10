@@ -42,30 +42,31 @@ let cmt_rule =
 
    depend on (package) to get all files installed, e.g. json conf files
 *)
-let analyze_rule =
-  Sexplib.Sexp.of_string
+let analyze_rules =
+  Sexplib.Sexp.of_string_many
     {|
     (rule
-      (enabled_if %{bin-available:lintcstubs})
       (targets %{log} %{sarif})
-      (deps compile_commands.json (:primitives) (:model) %{bin:lintcstubs} (package lintcstubs))
+      (enabled_if %{bin-available:lintcstubs})
+      (deps (:primitives) (:model) %{bin:lintcstubs} (package lintcstubs))
       (action
         (with-stdout-to %{log}
           (run %{bin:lintcstubs} --conf lintcstubs.json -o %{sarif} -I %{ocaml_where} --set dbg.solver-stats-interval 0 compile_commands.json %{model})
         )
       )
     )
-    |}
 
-let analyze_alias_rule =
-  Sexplib.Sexp.of_string
-    {|
+    (rule
+      (action (with-stdout-to compile_commands.json (echo [])))
+      (mode fallback)
+    )
+
     (rule
       (alias analyze)
-      (deps (:log))
+      (deps %{log})
       (action (diff lintcstubs.out.reference %{deps}))
     )
-  |}
+|}
 
 let incgen_rule =
   Sexplib.Sexp.of_string_many
@@ -84,20 +85,9 @@ let incgen_rule =
 
 (rule
  (alias runtest)
- (package lintcstubs)
  (enabled_if %{bin-available:lintcstubs})
  (action
   (diff dune.analysis.inc dune.analysis.inc.gen)))
-
-(rule
-  (target compile_commands.json)
-  (action
-    (pipe-stdout
-      (run dune rules)
-      (run %{bin:dune-compiledb})
-    )
-  )
-)
 |}
 
 let group_by_dirs paths =
@@ -163,18 +153,17 @@ let () =
      in
      let log_file = Fpath.(dir / "lintcstubs.log") in
      let sarif_file = Fpath.set_ext ".sarif" log_file in
-     let analyze_rule =
-       analyze_rule
-       |> apply_template' "%{log}" log_file
-       |> apply_template' "%{sarif}" sarif_file
-       |> apply_template ":primitives" [primitives_file]
-       |> apply_template ":model" (Fpath.Set.to_seq model_files |> List.of_seq)
+     let analyze_rules =
+       analyze_rules
+       |> List.map @@ fun analyze_rule ->
+          analyze_rule
+          |> apply_template' "%{log}" log_file
+          |> apply_template' "%{sarif}" sarif_file
+          |> apply_template ":primitives" [primitives_file]
+          |> apply_template ":model"
+               (Fpath.Set.to_seq model_files |> List.of_seq)
      in
-     let analyze_alias_rule =
-       analyze_alias_rule |> apply_template ":log" [log_file]
-     in
+     List.iter (Format.printf "%a@." Sexplib.Sexp.pp_hum) analyze_rules ;
      cmt_rules
      |> List.iter @@ fun cmt_rule ->
-        Format.printf "%a@." Sexplib.Sexp.pp_hum cmt_rule ;
-        Format.printf "%a@." Sexplib.Sexp.pp_hum analyze_rule ;
-        Format.printf "%a@." Sexplib.Sexp.pp_hum analyze_alias_rule
+        Format.printf "%a@." Sexplib.Sexp.pp_hum cmt_rule

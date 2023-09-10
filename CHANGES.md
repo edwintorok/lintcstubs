@@ -1,3 +1,7 @@
+## 0.4.5 (2023-09-10)
+
+* lintcstubs-dune-rules helper added
+
 ## 0.4.4 (2023-09-09)
 
 * helpers tools and examples added

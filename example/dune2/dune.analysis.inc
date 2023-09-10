@@ -7,11 +7,21 @@
  (action
   (with-stdout-to dune.analysis.inc.gen
    (run %{bin:lintcstubs-dune-rules} %{mlfiles} %{cfiles}))))
-(rule (alias runtest) (package lintcstubs)
- (enabled_if %{bin-available:lintcstubs})
+(rule (alias runtest) (enabled_if %{bin-available:lintcstubs})
  (action (diff dune.analysis.inc dune.analysis.inc.gen)))
-(rule (target compile_commands.json)
- (action (pipe-stdout (run dune rules) (run %{bin:dune-compiledb}))))
+(rule (targets ./lintcstubs.log ./lintcstubs.sarif)
+ (enabled_if %{bin-available:lintcstubs})
+ (deps (:primitives ./primitives.h) (:model foo2.model.c) %{bin:lintcstubs}
+  (package lintcstubs))
+ (action
+  (with-stdout-to ./lintcstubs.log
+   (run %{bin:lintcstubs} --conf lintcstubs.json -o ./lintcstubs.sarif -I
+    %{ocaml_where} --set dbg.solver-stats-interval 0 compile_commands.json
+    %{model}))))
+(rule (action (with-stdout-to compile_commands.json (echo [])))
+ (mode fallback))
+(rule (alias analyze) (deps ./lintcstubs.log)
+ (action (diff lintcstubs.out.reference %{deps})))
 (rule (enabled_if %{bin-available:lintcstubs_genmain})
  (targets foo2.model.c ./primitives.h)
  (deps (:cmt ./.foo2.objs/byte/foo2.cmt) %{bin:lintcstubs_arity_cmt}
@@ -22,14 +32,3 @@
    (with-stdout-to foo2.model.c
     (progn (run %{bin:lintcstubs_genwrap} %{cmt})
      (run %{bin:lintcstubs_genmain} %{cmt}))))))
-(rule (enabled_if %{bin-available:lintcstubs})
- (targets ./lintcstubs.log ./lintcstubs.sarif)
- (deps compile_commands.json (:primitives ./primitives.h)
-  (:model foo2.model.c) %{bin:lintcstubs} (package lintcstubs))
- (action
-  (with-stdout-to ./lintcstubs.log
-   (run %{bin:lintcstubs} --conf lintcstubs.json -o ./lintcstubs.sarif -I
-    %{ocaml_where} --set dbg.solver-stats-interval 0 compile_commands.json
-    %{model}))))
-(rule (alias analyze) (deps (:log ./lintcstubs.log))
- (action (diff lintcstubs.out.reference %{deps})))
