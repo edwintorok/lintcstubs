@@ -1,12 +1,12 @@
 (library
- (package lintcstubs-rules)
+ (package lintcstubs)
  (name filter_primitives)
  (modules filter_primitives)
  (libraries compiler-libs.common fpath))
 
 (executable
  (public_name lintcstubs-dune-rules)
- (package lintcstubs-rules)
+ (package lintcstubs)
  (name main)
  (modules main)
  (libraries filter_primitives sexplib fpath))

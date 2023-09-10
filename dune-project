@@ -32,20 +32,9 @@
   (lintcstubs-gen (= :version))
   (goblint (>= 2.1.0))
   goblint-cil
+  dune-compiledb
   fpath
   (fmt (>= 0.9.0))
+  sexplib
  )
 )
-
-(package
- (name lintcstubs-rules)
- (synopsis "Generate dune rules for lintcstubs integration")
- (description "Generates dune rules for running the static analyzer")
- (depends
-  (ocaml (>= 4.14))
-  (lintcstubs-arity (>= 0.2.2))
-  (lintcstubs-gen (= :version))
-  (lintcstubs (= :version))
- )
-)
-

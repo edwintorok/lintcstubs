@@ -14,8 +14,10 @@ depends: [
   "lintcstubs-gen" {= version}
   "goblint" {>= "2.1.0"}
   "goblint-cil"
+  "dune-compiledb"
   "fpath"
   "fmt" {>= "0.9.0"}
+  "sexplib"
   "odoc" {with-doc}
 ]
 build: [
