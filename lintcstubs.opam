@@ -37,3 +37,6 @@ build: [
   ["dune" "install" "-p" name "--create-install-files" name]
 ]
 dev-repo: "git+https://github.com/edwintorok/lintcstubs.git"
+pin-depends: [
+	["dune-compiledb.0.4.0" "git+https://github.com/edwintorok/dune-compiledb.git#0.4.0"]
+]

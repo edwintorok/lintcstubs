@@ -10,7 +10,7 @@ homepage: "https://github.com/edwintorok/lintcstubs"
 bug-reports: "https://github.com/edwintorok/lintcstubs/issues"
 depends: [
   "dune" {>= "3.0"}
-  "ocaml" {>= "4.14"}
+  "ocaml" {>= "4.13"}
   "lintcstubs-arity" {>= "0.2.2"}
   "odoc" {with-doc}
 ]
@@ -31,3 +31,6 @@ build: [
   ["dune" "install" "-p" name "--create-install-files" name]
 ]
 dev-repo: "git+https://github.com/edwintorok/lintcstubs.git"
+pin-depends: [
+	["lintcstubs-arity.0.2.2" "git+https://github.com/edwintorok/lintcstubs-arity.git#0.2.2"]
+]

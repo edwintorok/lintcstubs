@@ -16,6 +16,10 @@ jobs:
           - ubuntu-latest
         ocaml-compiler:
           - 4.14.x
+          - 4.13.x
+        exclude:
+          - os: macos-latest
+            ocaml-compiler: 4.13.x
 
     runs-on: ${{ matrix.os }}
 
@@ -29,8 +33,6 @@ jobs:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: true
 
-      - run: opam pin add lintcstubs-arity.0.2.2 https://github.com/edwintorok/lintcstubs-arity.git
-      
       - run: opam install . --deps-only --with-test
 
       - run: opam exec -- dune build
