@@ -48,7 +48,7 @@ let analyze_rules =
     (rule
       (targets %{log} %{sarif})
       (enabled_if %{bin-available:lintcstubs})
-      (deps (:primitives) (:model) %{bin:lintcstubs} (package lintcstubs))
+      (deps (:primitives) (:model) %{bin:lintcstubs} (package lintcstubs) compile_commands.json)
       (action
         (with-stdout-to %{log}
           (run %{bin:lintcstubs} --conf lintcstubs.json -o %{sarif} -I %{ocaml_where} --set dbg.solver-stats-interval 0 compile_commands.json %{model})

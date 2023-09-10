@@ -12,7 +12,7 @@
 (rule (targets ./lintcstubs.log ./lintcstubs.sarif)
  (enabled_if %{bin-available:lintcstubs})
  (deps (:primitives ./primitives.h) (:model foo2.model.c) %{bin:lintcstubs}
-  (package lintcstubs))
+  (package lintcstubs) compile_commands.json)
  (action
   (with-stdout-to ./lintcstubs.log
    (run %{bin:lintcstubs} --conf lintcstubs.json -o ./lintcstubs.sarif -I
