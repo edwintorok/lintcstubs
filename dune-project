@@ -1,4 +1,4 @@
-(lang dune 3.0)
+(lang dune 3.1)
 (cram enable)
 (using dune_site 0.1)
 (using action-plugin 0.1)

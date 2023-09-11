@@ -21,3 +21,9 @@
   (package lintcstubs)
   model/ocaml_runtime.model.c)
  (package lintcstubs))
+
+(rule
+ (alias foo)
+ (deps (glob_files_rec *.o) (glob_files_rec *.ml) (sandbox always) (source_tree .))
+ (action (run dune describe))
+)

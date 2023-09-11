@@ -10,7 +10,7 @@ Test primitive types:
   $ ocamlc -c -bin-annot test.ml
   $ lintcstubs_genmain test.cmt >test_call.c
   $ cat test_call.c
-  #include "primitives.h"
+  #include "test.ml.h"
   #include <goblint.h>
   #include "caml/threads.h"
   int __VERIFIER_nondet_int(void);
@@ -69,7 +69,7 @@ Test primitive types:
   }
 
 Test that we can compile the generated code (using pwd below is important because ocamlc runs the compiler in a temp dir):
-  $ lintcstubs_arity_cmt test.cmt >primitives.h
+  $ lintcstubs_arity_cmt test.cmt >test.ml.h
   $ lintcstubs_genwrap test.cmt >test_analyze.c
   $ cat test_call.c >>test_analyze.c
   $ ocamlc -ccopt -I -ccopt $(pwd)/../model/include -ccopt -Wall -c test_analyze.c

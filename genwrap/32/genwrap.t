@@ -53,12 +53,12 @@ Test primitive types:
   >   * unit = "stub_type_test_byte_res" "stub_type_test_nat_res"
   > EOF
   $ ocamlc -c -bin-annot test.ml
-  $ lintcstubs_arity_cmt test.cmt >primitives.h
+  $ lintcstubs_arity_cmt test.cmt >test.ml.h
   $ lintcstubs_genwrap test.cmt >test_wrap.c
   $ cat test_wrap.c
   
   #define DEBUG
-  #include "primitives.h"
+  #include "test.ml.h"
   #include "caml/threads.h"
   #include "caml/address_class.h"
   #include <assert.h>
@@ -106,7 +106,6 @@ Test primitive types:
   #ifndef Caml_check_caml_state
     #define Caml_check_caml_state()
   #endif
-  
   
   CAMLprim value __REAL(caml_ml_seek_in2)(value arg0, value arg1);
   __WRAPPER CAMLprim value __wrap_caml_ml_seek_in2(value arg0, value arg1)

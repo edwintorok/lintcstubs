@@ -9,7 +9,7 @@ license: "LGPL-2.1-or-later"
 homepage: "https://github.com/edwintorok/lintcstubs"
 bug-reports: "https://github.com/edwintorok/lintcstubs/issues"
 depends: [
-  "dune" {>= "3.0"}
+  "dune" {>= "3.1"}
   "ocaml" {>= "4.13"}
   "lintcstubs-gen" {= version}
   "goblint" {>= "2.1.0"}

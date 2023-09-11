@@ -161,8 +161,15 @@ let () =
     Arg.parse [] (fun file -> lst := file :: !lst) usage_msg ;
     !lst
   in
+  let header =
+    match files with
+    | [onefile] ->
+        (Filename.basename onefile |> Filename.chop_extension) ^ ".ml.h"
+    | _ ->
+        "primitives.h"
+  in
 
-  print_endline {|#include "primitives.h"|} ;
+  Printf.printf "#include \"%s\"\n" header ;
   print_endline {|#include <goblint.h>|} ;
   print_endline {|#include "caml/threads.h"|} ;
 

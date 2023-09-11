@@ -1,12 +1,13 @@
-(library
+(executable
+ (public_name lintcstubs_primitives_of_ml)
+ (modules lintcstubs_primitives_of_ml)
  (package lintcstubs)
- (name filter_primitives)
- (modules filter_primitives)
- (libraries compiler-libs.common fpath))
+ (libraries compiler-libs.common))
 
 (executable
- (public_name lintcstubs-dune-rules)
+ (public_name lintcstubs_gen_rules)
+ (modules lintcstubs_gen_rules)
  (package lintcstubs)
- (name main)
- (modules main)
- (libraries filter_primitives sexplib fpath))
+ (libraries sexplib fpath unix unionFind))
+
+(include lintcstubs.sexp)

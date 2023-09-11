@@ -11,7 +11,7 @@ Test primitive types:
   > external block_bad : unit -> float = "stub_float_bad" *)
   > EOF
   $ ocamlc -c -bin-annot test.ml
-  $ lintcstubs_arity_cmt test.cmt >primitives.h
+  $ lintcstubs_arity_cmt test.cmt >test.ml.h
   $ lintcstubs_genwrap test.cmt >test_analyze.c
 
   $ cat >test_stubs.c <<EOF
@@ -65,12 +65,12 @@ Test primitive types:
   > EOF
 
   $ goblint -I $(ocamlc -where) --enable dbg.regression --disable warn.deadcode --disable warn.info test_main.c test_stubs.c
-  [Error][Assert] Assertion "(res & 1L) != 0L" will fail. Expected: SUCCESS -> failed (test_main.c:84:4-84:40)
-  [Error][Assert] Assertion "res >> 1 <= 255L" will fail. Expected: SUCCESS -> failed (test_main.c:126:4-126:42)
+  [Error][Assert] Assertion "(res & 1L) != 0L" will fail. Expected: SUCCESS -> failed (test_main.c:83:4-83:40)
+  [Error][Assert] Assertion "res >> 1 <= 255L" will fail. Expected: SUCCESS -> failed (test_main.c:125:4-125:42)
 
 Now generate a main function, this introduces multi-threading:
   $ lintcstubs_genmain test.cmt >>test_analyze.c
   $ goblint  --set 'sem.int.signed_overflow' 'assume_wraparound' --set 'ana.activated[+]' 'assert' --enable warn.assert -I $(ocamlc -where) --disable warn.integer --enable dbg.regression --disable warn.info --disable warn.unsound --disable warn.deadcode test_analyze.c test_stubs.c ocaml_runtime.model.c
-  [Error][Assert] Assertion "res >> 1 <= 255L" will fail. Expected: SUCCESS -> failed (test_analyze.c:126:4-126:42)
-  [Error][Assert] Assertion "(res & 1L) != 0L" will fail. Expected: SUCCESS -> failed (test_analyze.c:84:4-84:40)
+  [Error][Assert] Assertion "res >> 1 <= 255L" will fail. Expected: SUCCESS -> failed (test_analyze.c:125:4-125:42)
+  [Error][Assert] Assertion "(res & 1L) != 0L" will fail. Expected: SUCCESS -> failed (test_analyze.c:83:4-83:40)
 

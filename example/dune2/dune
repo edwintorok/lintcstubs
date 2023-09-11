@@ -4,5 +4,3 @@
  (foreign_stubs
   (language c)
   (names foostubs)))
-
-(include dune.analysis.inc)

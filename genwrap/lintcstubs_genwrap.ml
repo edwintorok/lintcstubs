@@ -59,9 +59,10 @@ let usage_msg = Printf.sprintf "%s [FILE.cmt...]" Sys.executable_name
 *)
 
 let header =
-  {|
+  format_of_string
+    {|
 #define DEBUG
-#include "primitives.h"
+#include "%s"
 #include "caml/threads.h"
 #include "caml/address_class.h"
 #include <assert.h>
@@ -313,8 +314,15 @@ let () =
     Arg.parse [] (fun file -> lst := file :: !lst) usage_msg ;
     !lst
   in
+  let headername =
+    match files with
+    | [onefile] ->
+        (Filename.basename onefile |> Filename.chop_extension) ^ ".ml.h"
+    | _ ->
+        "primitives.h"
+  in
 
-  print_endline header ;
+  Printf.printf header headername ;
   flush stdout ;
   Format.printf "@[<v>" ;
 
