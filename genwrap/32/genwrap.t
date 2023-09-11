@@ -114,8 +114,7 @@ Test primitive types:
      
      /* in_channel */
      if (Is_block(arg0)) {
-         ASSERT_ARG(Is_in_value_area(arg0));
-        (void)Tag_val(arg0);
+         (void)Tag_val(arg0);
      }
      
      /* int */
@@ -198,14 +197,12 @@ Test primitive types:
      
      /* Float.Array.t */
      if (Is_block(arg5)) {
-         ASSERT_ARG(Is_in_value_area(arg5));
-        (void)Tag_val(arg5);
+         (void)Tag_val(arg5);
      }
      
      /* float array */
      if (Is_block(arg6)) {
-         ASSERT_ARG(Is_in_value_area(arg6));
-        (void)Tag_val(arg6);
+         (void)Tag_val(arg6);
      }
      
      /* int32 */
@@ -256,20 +253,17 @@ Test primitive types:
      
      /* int array */
      if (Is_block(arg14)) {
-         ASSERT_ARG(Is_in_value_area(arg14));
-        (void)Tag_val(arg14);
+         (void)Tag_val(arg14);
      }
      
      /* int32 array */
      if (Is_block(arg15)) {
-         ASSERT_ARG(Is_in_value_area(arg15));
-        (void)Tag_val(arg15);
+         (void)Tag_val(arg15);
      }
      
      /* char list */
      if (Is_block(arg16)) {
-         ASSERT_ARG(Is_in_value_area(arg16));
-        (void)Tag_val(arg16);
+         (void)Tag_val(arg16);
      }
      
      /* float */
@@ -315,8 +309,7 @@ Test primitive types:
      
      /*  */
      if (Is_block(res)) {
-         ASSERT_RES(Is_in_value_area(res));
-        (void)Tag_val(res);
+         (void)Tag_val(res);
      }
      
      Caml_check_caml_state();
@@ -375,14 +368,12 @@ Test primitive types:
      value res_5 = Field(res, 5);
      
      if (Is_block(res_5)) {
-         ASSERT_RES(Is_in_value_area(res_5));
-        (void)Tag_val(res_5);
+         (void)Tag_val(res_5);
      }
      value res_6 = Field(res, 6);
      
      if (Is_block(res_6)) {
-         ASSERT_RES(Is_in_value_area(res_6));
-        (void)Tag_val(res_6);
+         (void)Tag_val(res_6);
      }
      value res_7 = Field(res, 7);
      
@@ -433,20 +424,17 @@ Test primitive types:
      value res_14 = Field(res, 14);
      
      if (Is_block(res_14)) {
-         ASSERT_RES(Is_in_value_area(res_14));
-        (void)Tag_val(res_14);
+         (void)Tag_val(res_14);
      }
      value res_15 = Field(res, 15);
      
      if (Is_block(res_15)) {
-         ASSERT_RES(Is_in_value_area(res_15));
-        (void)Tag_val(res_15);
+         (void)Tag_val(res_15);
      }
      value res_16 = Field(res, 16);
      
      if (Is_block(res_16)) {
-         ASSERT_RES(Is_in_value_area(res_16));
-        (void)Tag_val(res_16);
+         (void)Tag_val(res_16);
      }
      value res_17 = Field(res, 17);
      
@@ -463,8 +451,7 @@ Test primitive types:
      
      /*  */
      if (Is_block(arg0)) {
-         ASSERT_ARG(Is_in_value_area(arg0));
-        (void)Tag_val(arg0);
+         (void)Tag_val(arg0);
      }
      
      value res = __REAL(stub_type_test_byte_res)(arg0);
@@ -472,8 +459,7 @@ Test primitive types:
      
      /*  */
      if (Is_block(res)) {
-         ASSERT_RES(Is_in_value_area(res));
-        (void)Tag_val(res);
+         (void)Tag_val(res);
      }
      
      Caml_check_caml_state();
