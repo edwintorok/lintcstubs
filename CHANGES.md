@@ -1,3 +1,7 @@
+## 0.4.7 (2023-09-11)
+
+* lower bounds and 32-bit build fixes
+
 ## 0.4.6 (2023-09-10)
 
 * lintcstubs-dune-rules helper added
