@@ -35,6 +35,6 @@
   dune-compiledb
   fpath
   (fmt (>= 0.9.0))
-  sexplib
+  (sexplib (>= v0.15.0))
  )
 )
