@@ -56,7 +56,7 @@ module DuneRule = struct
 
   let alias x = List [Atom "alias"; Atom x]
 
-  let _alias_deps x deps =
+  let alias_deps x deps =
     List
       [Atom "alias"; List [Atom "name"; Atom x]; List [Atom "deps"; Atom deps]]
 
@@ -386,14 +386,21 @@ let update_rules ~filter self_sexp deps =
       ]
   (* TODO: group based on symbols, fall back to everything in one when no symbols *)
   and lint_rules c_files =
-    Seq.return
-    @@ rule
+    List.to_seq
+    [ rule
+     [ target (Fpath.v "primitives.h")
+      ; deps (Fpath.Set.elements h_files)
+      ; action @@ with_stdout_to_target @@ run ["cat"; "%{deps}"]
+    ]
+    ; rule
          [
            target (Fpath.v "lintcstubs.sarif") (* TODO: flags *)
-         ; deps (Fpath.Set.elements (Fpath.Set.union c_files h_files))
+         ; deps (Fpath.Set.elements (Fpath.Set.add (Fpath.v "primitives.h") (Fpath.Set.union c_files h_files)))
          ; action
-           @@ run ["%{bin:lintcstubs}"; "-o"; "%{target}"; "-I"; "%{ocaml_where}"; "--conf"; "lintcstubs.json"; "%{deps}"]
+           @@ run ["%{bin:lintcstubs}"; "-o"; "%{target}"; "-I"; "."; "-I"; "%{ocaml_where}"; "--conf"; "lintcstubs.json"; "%{deps}"]
          ]
+    ; alias_deps "runtest" "lintcstubs.sarif"
+  ]
   and self =
     Seq.return
     @@ rule

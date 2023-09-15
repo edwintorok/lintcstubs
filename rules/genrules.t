@@ -93,7 +93,8 @@ Now generate rules:
   $ dune rules -r --root=.. | lintcstubs_gen_rules >lintcstubs.sexp
   $ cat lintcstubs.sexp
   $ echo "(include lintcstubs.sexp)" >dune
-  $ dune build --root=.. lintcstubs.sexp
-  $ cat lintcstubs.sexp
+  $ cp lintcstubs.sexp lintcstubs0.sexp
+  $ (cd .. && dune build src/lintcstubs.sexp)
+  $ diff -U 1 lintcstubs0.sexp lintcstubs.sexp
   $ cd ..
   $ dune runtest --root=..
