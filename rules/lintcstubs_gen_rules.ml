@@ -293,6 +293,116 @@ let foreach set f =
   |> Fpath.Set.to_seq
   |> Seq.concat_map @@ fun file -> file |> f |> List.to_seq
 
+let read_lines file =
+  let ch = open_in (Fpath.to_string file) in
+  Fun.protect ~finally:(fun () -> close_in_noerr ch) @@ fun () ->
+  List.of_seq
+    (ch
+    |> Seq.unfold @@ fun ch ->
+       try Some (input_line ch, ch) with End_of_file -> None
+    )
+
+let read_symbols file =
+  file
+  |> read_lines
+  |> List.rev_map @@ fun line ->
+     match String.split_on_char ' ' line with
+     | file :: symbol :: _ ->
+         let file = String.sub file 0 (String.length file - 1) in
+         (Fpath.v file, symbol)
+     | _ ->
+
+         invalid_arg ("Cannot parse symbols line: " ^ line)
+
+(* TODO
+    
+let do_group_symbols files =
+  let symbols_of_files =
+    Fpath.Set.fold
+      (fun file map ->
+        let symbols = read_symbols file in
+        symbols
+        |> List.fold_left
+             (fun map (file, symbol) ->
+               Fpath.Map.update file
+                 (fun old ->
+                   let old = Option.value ~default:SymbolSet.empty old in
+                   Some (SymbolSet.add symbol old)
+                 )
+                 map
+             )
+             map
+      )
+      files Fpath.Map.empty
+  in
+  let uf = UF.new_store () in
+  let ufiles = Stack.create () in
+  let (_ : _ SymbolMap.t) =
+    Fpath.Map.fold
+      (fun file symbols map ->
+        let file = UF.make uf (Fpath.Set.singleton file) in
+        Stack.push file ufiles ;
+        SymbolSet.fold
+          (fun symbol ->
+            SymbolMap.update symbol (fun uref_opt ->
+                let uref = Option.value ~default:file uref_opt in
+                Some (UF.merge uf Fpath.Set.union uref file)
+            )
+          )
+          symbols map
+      )
+      symbols_of_files SymbolMap.empty
+  in
+  ufiles
+  |> Stack.iter @@ fun ufile ->
+     if UF.is_representative uf ufile then
+       let files = UF.get uf ufile in
+       let main = Fpath.Set.choose files |> Option.get in
+       Rule.
+         [
+           rule
+             [
+               deps_glob_paths "*.ml.h"
+                 (files
+                 |> Fpath.Set.map (fun file ->
+                        match Fpath.get_ext file with
+                        | ".ml" ->
+                            Fpath.set_ext ~multi:true ".cmt.model.c" file
+                        | ".o" ->
+                            Fpath.set_ext ~multi:true ".c" file
+                        | _ ->
+                            assert false
+                    )
+                 |> Fpath.Set.elements
+                 )
+             ; target (Fpath.set_ext "sarif" main)
+               (* TODO: compile_commands.json *)
+             ; alias "lintcstubs"
+             ; action
+               @@ run
+                    [
+                      "%{bin:lintcstubs}"
+                    ; "--conf"
+                    ; "lintcstubs.json"
+                    ; "-o"
+                    ; "%{target}"
+                    ; "-I"
+                    ; "%{ocaml_where}"
+                    ; "%{deps}"
+                    ]
+             ]
+         ]
+       |> List.iter (Format.printf "%a@," @@ Sexp.pp_hum_indent 2)
+
+let () =
+  let usage_msg =
+    Printf.sprintf "%s [--root root] [--foreach glob FILE...]"
+      Sys.executable_name
+  in
+   
+    
+*)
+
 let update_rules ~filter self_sexp deps =
   let to_cmtfile' cmt_file =
     let cmt_dir, cmt_base = Fpath.split_base cmt_file in
