@@ -11,3 +11,8 @@
  (libraries sexplib fpath unix unionFind))
 
 (include lintcstubs.sexp)
+
+(cram
+ (deps (package lintcstubs) %{bin:lintcstubs_gen_rules})
+ (package lintcstubs)
+)
