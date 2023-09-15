@@ -1,3 +1,11 @@
+Define a project in a subdir:
+  $ mkdir -p testdir && cd testdir  
+  $ cat >dune-project <<EOF
+  > (lang dune 3.0)
+  > EOF
+  $ touch dune
+  $ mkdir src && cd src
+
 Define a C primitive:
   $ mkdir c_stubs
   $ cat >c_stubs/dune <<EOF
@@ -76,7 +84,16 @@ And another module, but using symbols from 2 C libs, with ML in same library:
   > EOF
 
 This builds and runs:
-  $ cat >dune-project <<EOF
-  > (lang dune 2.7)
-  > EOF
+  $ cd ..
   $ dune runtest
+
+Now generate rules:
+  $ dune clean
+  $ cd src
+  $ dune rules -r --root=.. | lintcstubs_gen_rules >lintcstubs.sexp
+  $ cat lintcstubs.sexp
+  $ echo "(include lintcstubs.sexp)" >dune
+  $ dune build --root=.. lintcstubs.sexp
+  $ cat lintcstubs.sexp
+  $ cd ..
+  $ dune runtest --root=..
