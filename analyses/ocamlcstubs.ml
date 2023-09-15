@@ -12,7 +12,7 @@
  * GNU Lesser General Public License for more details.
  *)
 
-open Prelude.Ana
+open GoblintCil
 open Analyses
 open! Cilint
 
@@ -20,11 +20,11 @@ open! Cilint
    performance reasons, use a boolean to turn tracing on/off just for this
    module.
 
-   Usage on the command line: '--enable dbg.debug'
+   Usage on the command line: '--enable warn.debug'
 *)
 let trace_name = __MODULE__
 
-let tracing_enabled = lazy (GobConfig.get_bool "dbg.debug")
+let tracing_enabled = lazy (GobConfig.get_bool "warn.debug")
 
 let tracing () = Lazy.force tracing_enabled
 
@@ -47,12 +47,12 @@ module DomainLock = struct
               g := Some v ;
               v
           | _ ->
-              let v = Goblintutil.create_var @@ makeGlobalVar k intType in
+              let v = Cilfacade.create_var @@ makeGlobalVar k intType in
               g := Some v ;
               v
         )
 
-  let runtime_lock_event () = LockDomain.Addr.from_var @@ runtime_lock_var ()
+  let runtime_lock_event () = Goblint_lib.LockDomain.Addr.of_var @@ runtime_lock_var ()
 
   let runtime_lock () = AddrOf (Cil.var @@ runtime_lock_var ())
 
@@ -77,7 +77,7 @@ module DomainLock = struct
     let must =
       ctx.ask
         Queries.(
-          MustBeProtectedBy {mutex= runtime_lock_event (); write; global= arg}
+          MustBeProtectedBy {mutex= runtime_lock_event (); write; global= arg;protection=Protection.Strong}
         )
     in
     if not must then
@@ -166,7 +166,7 @@ let ocaml_value_derefs_of_exp exp =
   let (_ : exp) = visitCilExpr visitor exp in
   !values
 
-class init_visitor ask (acc : Lval.CilLval.t list ref) =
+class init_visitor ask acc =
   object
     inherit nopCilVisitor
 
@@ -249,7 +249,7 @@ let assert_begins_with_CAMLparam0 f =
   let similar_varinfo v1 v2 =
     String.equal v1.vname v2.vname && CilType.Typ.equal v1.vtype v2.vtype
   in
-  let preamble = List.take (List.length caml_frame) f.slocals in
+  let preamble = Batteries.List.take (List.length caml_frame) f.slocals in
   if
     false (* TODO: enable/disable with a flag, for now too strict *)
     && not (List.equal similar_varinfo preamble caml_frame)
@@ -347,7 +347,7 @@ module Spec : Analyses.MCPSpec = struct
         in
         (* TODO: find functions in struct and register as C stub roots... *)
         local
-    | n when String.starts_with n "caml_" ->
+    | n when String.starts_with n ~prefix:"caml_" ->
         (* call into OCaml runtime system, must hold domain lock *)
         Cstub.call_caml_runtime ctx f arglist
     | _ ->

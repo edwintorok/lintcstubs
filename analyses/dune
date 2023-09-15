@@ -4,4 +4,4 @@
  (flags
   (:standard -open Goblint_lib))
  ; make it compatible to how it would look like if it was part of Goblint itself
- (libraries goblint.lib goblint-cil))
+ (libraries goblint.lib goblint-cil goblint.build-info.dune))

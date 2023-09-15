@@ -240,7 +240,7 @@ STUB static void __caml_move(value arg, volatile value *dest)
     void *orig = Hp_val(arg);
     memcpy(p, orig, len);
     *dest = Val_hp(p);
-    free(orig);
+    /* free(orig); TODO: raises error now */
 }
 
 #ifndef CAML_LOCAL_ROOTS
@@ -311,13 +311,14 @@ STUB value caml_alloc(mlsize_t wosize, tag_t tag)
 {
     unsigned i;
     value p = caml_alloc_shr(wosize, tag);
+    /* 
     if ( tag < No_scan_tag )
     {
-        /* FIXME: raises an error in goblint: ikinds int and unsigned int are
+         FIXME: raises an error in goblint: ikinds int and unsigned int are
          * not compatible
          for ( i = 0; i < wosize; i++ )
-            Field(p, i) = Val_unit; */
-    }
+            Field(p, i) = Val_unit; 
+    }*/
     return p;
 }
 

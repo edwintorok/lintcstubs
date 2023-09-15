@@ -10,19 +10,10 @@
   (names ocaml_runtime.model))
  (package lintcstubs))
 
-(install
- (section
-  (site
-   ; TODO: dev version of dune has a different site declared
-   ; (goblint lib)))
-   (goblint lib_stub_src)))
- (files ocaml_runtime.model.c)
- (package lintcstubs))
-
 (cram
  (deps
   %{bin:lintcstubs_genwrap}
   %{bin:lintcstubs_arity_cmt}
   %{bin:goblint}
-  ocaml_runtime.model.c)
+  stub/src/ocaml_runtime.model.c)
  (package lintcstubs))

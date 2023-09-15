@@ -66,7 +66,7 @@ let set_default_flags () =
   (* OCaml runtime model - needed so we know what locks/unlocks the runtime
      lock
   *)
-  let stubdirs = List.map Fpath.v Goblint_sites.lib_stub_src in
+  let stubdirs = Goblint_sites.lib_stub_src in
   match find_stub_source ~stubdirs Fpath.(v "ocaml_runtime.model.c") with
   | [] ->
       Fmt.failwith "OCaml runtime model not found in %a"
@@ -76,7 +76,7 @@ let set_default_flags () =
       set_auto "files[+]" @@ Fpath.to_string one
 
 (** [enable_tracing_if_needed ()] enables tracing messages in our analyses
-  if enabled on the CLI with [dbg.debug].
+  if enabled on the CLI with [warn.debug].
  *)
 let enable_tracing_if_needed () =
   if Lintcstubs_analysis.Ocamlcstubs.tracing () then
@@ -106,7 +106,7 @@ let report_results () =
   (* if [--enable gobview --set save_run DIR] is used output extra information
      for [gobview] into [DIR]. *)
   Maingoblint.do_gobview () ;
-  if !Goblintutil.verified = Some false then exit 3
+  if !AnalysisState.verified = Some false then exit 3
 (* verifier failed! *)
 
 (** [main ()] entrypoint for our C stub static analyzer.
@@ -119,10 +119,11 @@ let main () =
   (* for now we use goblint's CLI *)
   Maingoblint.parse_arguments () ;
   set_default_flags () ;
+  Maingoblint.handle_extraspecials ();
   enable_tracing_if_needed () ;
   let file = with_goblint_tmpdir Maingoblint.preprocess_parse_merge in
   (* AutoTune.chooseConfig file ;*)
-  file |> Maingoblint.do_analyze @@ Analyses.empty_increment_data () ;
+  file |> Maingoblint.do_analyze None;
   report_results ()
 
 (* Based on goblint.ml:

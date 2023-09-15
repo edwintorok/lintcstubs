@@ -60,7 +60,8 @@ Cannot dereference OCaml values after releasing the runtime lock:
   > }
   > EOF
 
-  $ lintcstubs --set mainfun[+] foo --disable warn.imprecise --disable warn.info --enable dbg.regression --disable warn.deadcode -I $(ocamlc -where) test.c 2>&1 | sed -e 's^/[^ ]*/^^g'
+  $ lintcstubs --set mainfun[+] foo --set warn.race-threshold 1000 --disable warn.imprecise --disable warn.info --enable dbg.regression --disable warn.deadcode -I $(ocamlc -where) test.c 2>&1 | sed -e 's^/[^ ]*/^^g'
+  [Warning][Unknown] unlocking mutex which may not be held (ocaml_runtime.model.c:568:5-568:62)
   [Warning][Behavior > Undefined > NullPointerDereference][CWE-476] May dereference NULL pointer (test.c:9:3-9:39)
   [Error][Race] DomainLock: must be held when dereferencing OCaml value v (test.c:9:3-9:39)
 
@@ -81,4 +82,5 @@ Correct would be:
 
   $ lintcstubs --set mainfun[+] foo --disable warn.imprecise --enable dbg.regression --disable warn.info --disable warn.deadcode -I $(ocamlc -where) test.c
   [Warning][Behavior > Undefined > NullPointerDereference][CWE-476] May dereference NULL pointer (test.c:7:7-7:44)
+  [Warning][Unknown] unlocking mutex which may not be held (/var/home/edwin/git/lint/lintcstubs/_build/install/default/share/goblint/lib/stub/src/ocaml_runtime.model.c:568:5-568:62)
 
