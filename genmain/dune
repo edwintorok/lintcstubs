@@ -54,7 +54,7 @@
   (flags
    (:standard -Werror-implicit-function-declaration -Wall))
   (names genmain_test.model)
-  (include_dirs ../model/stub/src/include)))
+  (include_dirs ../model/include)))
 
 (cram
  (deps

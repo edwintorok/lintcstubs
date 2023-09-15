@@ -4,7 +4,7 @@
  (name modeltest)
  (foreign_stubs
   (language c)
-  (include_dirs include)
+  (include_dirs ../../include)
   (flags
    (:standard -Wno-attributes))
   (names ocaml_runtime.model))
@@ -15,5 +15,5 @@
   %{bin:lintcstubs_genwrap}
   %{bin:lintcstubs_arity_cmt}
   %{bin:goblint}
-  stub/src/ocaml_runtime.model.c)
+  ocaml_runtime.model.c)
  (package lintcstubs))

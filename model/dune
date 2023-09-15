@@ -1,0 +1,6 @@
+(install
+ (package lintcstubs)
+ (section
+  (site
+   (goblint lib)))
+ (files (glob_files_rec *.c)))
