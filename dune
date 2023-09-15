@@ -1,6 +1,6 @@
 (executable
  (public_name lintcstubs)
- (libraries lintcstubs_analysis goblint.sites.dune goblint.lib fpath fmt)
+ (libraries lintcstubs_analysis goblint.sites goblint.lib goblint.build-info fpath fmt)
  (flags :standard -linkall)
  (package lintcstubs))
 
@@ -19,5 +19,5 @@
  (deps
   %{bin:lintcstubs}
   (package lintcstubs)
-  model/ocaml_runtime.model.c)
+  model/stub/src/ocaml_runtime.model.c)
  (package lintcstubs))

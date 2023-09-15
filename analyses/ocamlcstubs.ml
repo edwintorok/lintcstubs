@@ -12,7 +12,7 @@
  * GNU Lesser General Public License for more details.
  *)
 
-open Prelude.Ana
+open GoblintCil
 open Analyses
 open! Cilint
 
@@ -20,11 +20,11 @@ open! Cilint
    performance reasons, use a boolean to turn tracing on/off just for this
    module.
 
-   Usage on the command line: '--enable dbg.debug'
+   Usage on the command line: '--enable warn.debug'
 *)
 let trace_name = __MODULE__
 
-let tracing_enabled = lazy (GobConfig.get_bool "dbg.debug")
+let tracing_enabled = lazy (GobConfig.get_bool "warn.debug")
 
 let tracing () = Lazy.force tracing_enabled
 
@@ -42,17 +42,17 @@ module DomainLock = struct
           v
       | None -> (
           let k = "__VERIFIER_ocaml_runtime_lock" in
-          match VarQuery.varqueries_from_names !Cilfacade.current_file [k] with
-          | [VarQuery.Global v], _ ->
+          match Queries.VarQuery.varqueries_from_names !Cilfacade.current_file [k] with
+          | [Queries.VarQuery.Global v], _ ->
               g := Some v ;
               v
           | _ ->
-              let v = Goblintutil.create_var @@ makeGlobalVar k intType in
+              let v = Cilfacade.create_var @@ makeGlobalVar k intType in
               g := Some v ;
               v
         )
 
-  let runtime_lock_event () = LockDomain.Addr.from_var @@ runtime_lock_var ()
+  let runtime_lock_event () = runtime_lock_var (), `NoOffset
 
   let runtime_lock () = AddrOf (Cil.var @@ runtime_lock_var ())
 
@@ -60,8 +60,8 @@ module DomainLock = struct
     let lockset = ctx.ask Queries.MustLockset in
     if tracing () then
       tracel "OCaml domain lock must be held, current lockset is %a"
-        Queries.LS.pretty lockset ;
-    if not @@ Queries.LS.mem (runtime_lock_var (), `NoOffset) lockset then
+        LockDomain.MustLockset.pretty lockset ;
+    if not @@ LockDomain.MustLockset.mem (runtime_lock_var (), `NoOffset) lockset then
       (* we could use something similar to MayLocks to track may lock and give
          a better warning message: is the lock maybe held on some paths, or
          surely not held? *)
@@ -77,7 +77,8 @@ module DomainLock = struct
     let must =
       ctx.ask
         Queries.(
-          MustBeProtectedBy {mutex= runtime_lock_event (); write; global= arg}
+          MustBeProtectedBy {mutex= runtime_lock_event (); kind = if write then Write else
+ReadWrite; global= arg;protection=Protection.Strong}
         )
     in
     if not must then
@@ -166,7 +167,7 @@ let ocaml_value_derefs_of_exp exp =
   let (_ : exp) = visitCilExpr visitor exp in
   !values
 
-class init_visitor ask (acc : Lval.CilLval.t list ref) =
+class init_visitor ask acc =
   object
     inherit nopCilVisitor
 
@@ -180,8 +181,8 @@ class init_visitor ask (acc : Lval.CilLval.t list ref) =
             let lvals = ask Queries.(MayPointTo e) in
             if tracing () then
               tracel "initializer %a may point to %a" Cil.d_exp e
-                Queries.LS.pretty lvals ;
-            acc := List.rev_append (Queries.LS.elements lvals) !acc
+                LockDomain.MustLockset.pretty lvals ;
+            acc := List.rev_append (LockDomain.MustLockset.elements lvals) !acc
           ) ;
           SkipChildren
       | CompoundInit _ ->
@@ -232,9 +233,9 @@ let ocaml_params_globals =
 let caml_state =
   lazy
     ( match
-        VarQuery.varqueries_from_names !Cilfacade.current_file ["Caml_state"]
+        Queries.VarQuery.varqueries_from_names !Cilfacade.current_file ["Caml_state"]
       with
-    | [VarQuery.Global v], _ ->
+    | [Queries.VarQuery.Global v], _ ->
         v
     | _ ->
         failwith "Missing Caml_state"
@@ -249,7 +250,7 @@ let assert_begins_with_CAMLparam0 f =
   let similar_varinfo v1 v2 =
     String.equal v1.vname v2.vname && CilType.Typ.equal v1.vtype v2.vtype
   in
-  let preamble = List.take (List.length caml_frame) f.slocals in
+  let preamble = Batteries.List.take (List.length caml_frame) f.slocals in
   if
     false (* TODO: enable/disable with a flag, for now too strict *)
     && not (List.equal similar_varinfo preamble caml_frame)
@@ -296,7 +297,9 @@ module Spec : Analyses.MCPSpec = struct
 
   let return ctx _ (_f : fundec) = ctx.local
 
-  let special (ctx : (D.t, G.t, C.t, V.t) ctx) (_lval : lval option)
+  let startcontext _ = ()
+
+  let special (*(ctx : (D.t, G.t, C.t, V.t) ctx)*) ctx (_lval : lval option)
       (f : varinfo) (arglist : exp list) =
     if tracing () then
       tracel "special(%s)" f.vname ;
@@ -312,9 +315,9 @@ module Spec : Analyses.MCPSpec = struct
            query the points-to analyses on where it actually points to *)
         let custom_ops = ctx.ask Queries.(MayPointTo (List.nth arglist 0)) in
         if tracing () then
-          tracel "caml_alloc_custom points to %a" Queries.LS.pretty custom_ops ;
+          tracel "caml_alloc_custom points to %a" Queries.AD.pretty custom_ops ;
         let () =
-          if not @@ Queries.LS.is_top custom_ops then (
+          if not @@ Queries.AD.is_top custom_ops then (
             (* it points somewhere, all the function pointers in that struct's
                initializer should be treated as C stubs
                therefore this should be a separate analysis that just determines
@@ -322,10 +325,11 @@ module Spec : Analyses.MCPSpec = struct
                this may be a global, but not necessarily
             *)
             custom_ops
-            |> Queries.LS.iter @@ function
-               | {vinit= {init= None}; _}, _ ->
+            |> Queries.AD.iter @@ fun elt ->
+               elt |> Queries.AD.Addr.to_var |> Option.iter @@ function
+               | {vinit= {init= None}; _} ->
                    ()
-               | {vinit= {init= Some init}; _}, _ ->
+               | {vinit= {init= Some init}; _} ->
                    let funptrs =
                      init
                      |> function_ptrs_of_init []
@@ -333,21 +337,21 @@ module Spec : Analyses.MCPSpec = struct
                    in
                    if tracing () then
                      tracel "found function pointers: %a"
-                       (Pretty.d_list "," Queries.LS.pretty)
+                       (Pretty.d_list "," Queries.AD.pretty)
                        funptrs ;
                    funptrs
                    |> List.iter @@ fun funptr ->
                       let new_stubs =
                         funptr
-                        |> Queries.LS.elements
-                        |> List.map (fun (fn, _) -> fn.vname)
+                        |> Queries.AD.elements
+                        |> List.filter_map (fun fn -> fn |> Queries.AD.Addr.to_var |> Option.map (fun f -> f.vname))
                       in
                       cstubs := List.rev_append new_stubs !cstubs
           )
         in
         (* TODO: find functions in struct and register as C stub roots... *)
         local
-    | n when String.starts_with n "caml_" ->
+    | n when String.starts_with n ~prefix:"caml_" ->
         (* call into OCaml runtime system, must hold domain lock *)
         Cstub.call_caml_runtime ctx f arglist
     | _ ->

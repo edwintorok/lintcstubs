@@ -1,3 +1,4 @@
 [Error][Race] DomainLock: must be held when dereferencing OCaml value v (foostubs.c:13:4-13:40)
 [Warning][Assert] Assertion "(res & 1L) != 0L" is unknown. Expected: SUCCESS -> failed (primitives.model.c:66:4-66:40)
 [Warning][Assert] Assertion "(res & 1L) != 0L" is unknown. Expected: SUCCESS -> failed (primitives.model.c:86:4-86:40)
+[Error][Imprecise][Unsound] Function definition missing

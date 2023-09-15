@@ -1,28 +1,6 @@
-; check that the model compiles with usual compiler
-
-(library
- (name modeltest)
- (foreign_stubs
-  (language c)
-  (include_dirs include)
-  (flags
-   (:standard -Wno-attributes))
-  (names ocaml_runtime.model))
- (package lintcstubs))
-
 (install
+ (package lintcstubs)
  (section
   (site
-   ; TODO: dev version of dune has a different site declared
-   ; (goblint lib)))
-   (goblint lib_stub_src)))
- (files ocaml_runtime.model.c)
- (package lintcstubs))
-
-(cram
- (deps
-  %{bin:lintcstubs_genwrap}
-  %{bin:lintcstubs_arity_cmt}
-  %{bin:goblint}
-  ocaml_runtime.model.c)
- (package lintcstubs))
+   (goblint lib)))
+ (files (glob_files_rec *.c)))

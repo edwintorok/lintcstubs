@@ -1,4 +1,4 @@
-(lang dune 3.0)
+(lang dune 3.6)
 (cram enable)
 (using dune_site 0.1)
 (using action-plugin 0.1)
@@ -30,7 +30,7 @@
  (depends
   (ocaml (>= 4.13))
   (lintcstubs-gen (= :version))
-  (goblint (and (>= 2.1.0) (< 2.2)))
+  (goblint (>= 2.7.1))
   goblint-cil
   dune-compiledb
   fpath

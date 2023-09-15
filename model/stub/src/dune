@@ -1,0 +1,19 @@
+; check that the model compiles with usual compiler
+
+(library
+ (name modeltest)
+ (foreign_stubs
+  (language c)
+  (include_dirs ../../include)
+  (flags
+   (:standard -Wno-attributes))
+  (names ocaml_runtime.model))
+ (package lintcstubs))
+
+(cram
+ (deps
+  %{bin:lintcstubs_genwrap}
+  %{bin:lintcstubs_arity_cmt}
+  %{bin:goblint}
+  ocaml_runtime.model.c)
+ (package lintcstubs))

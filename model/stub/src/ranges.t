@@ -70,7 +70,12 @@ Test primitive types:
 
 Now generate a main function, this introduces multi-threading:
   $ lintcstubs_genmain test.cmt >>test_analyze.c
-  $ goblint  --set 'sem.int.signed_overflow' 'assume_wraparound' --set 'ana.activated[+]' 'assert' --enable warn.assert -I $(ocamlc -where) --disable warn.integer --enable dbg.regression --disable warn.info --disable warn.unsound --disable warn.deadcode test_analyze.c test_stubs.c ocaml_runtime.model.c
+  $ goblint  --set 'sem.int.signed_overflow' 'assume_wraparound' --set 'ana.activated[+]' 'assert' --enable warn.assert -I $(ocamlc -where) --disable warn.integer --enable dbg.regression --disable warn.info --disable warn.imprecise --disable warn.unsound --disable warn.deadcode test_analyze.c test_stubs.c ocaml_runtime.model.c
+  [Warning][Behavior > Undefined > NullPointerDereference][CWE-476] May dereference NULL pointer (ocaml_runtime.model.c:256:30-256:61)
+  [Warning][Behavior > Undefined > NullPointerDereference][CWE-476] May dereference NULL pointer (ocaml_runtime.model.c:236:14-236:103)
+  [Warning][Behavior > Undefined > Other] Function declared 'noreturn' could return (ocaml_runtime.model.c:634:1-634:1)
+  [Warning][Behavior > Undefined > NullPointerDereference][CWE-476] May dereference NULL pointer (ocaml_runtime.model.c:241:5-241:25)
   [Error][Assert] Assertion "res >> 1 <= 255L" will fail. Expected: SUCCESS -> failed (test_analyze.c:126:4-126:42)
   [Error][Assert] Assertion "(res & 1L) != 0L" will fail. Expected: SUCCESS -> failed (test_analyze.c:84:4-84:40)
+  [Error][Imprecise][Unsound] Function definition missing
 
