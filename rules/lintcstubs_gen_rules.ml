@@ -4,79 +4,6 @@ type mode = Initial | Foreach of Fpath.Set.t
 
 let root = ref None
 
-module DuneRule = struct
-  open Sexp
-  open Sexplib.Std
-
-  (*
-     tagless-final
-
-     targets/target chosen based on #list
-     extract common prefix for target, assert that it is the same for all,
-     type target = subdir * basename list
-     type ... = subdir -> sexp
-
-     rule receives target, and gives subdir to all its other fields.... and constructs sexp
-  *)
-
-  let subdir dir rules =
-    if Fpath.is_current_dir dir then
-      rules
-    else
-      [List (Atom "subdir" :: Atom (Fpath.to_string dir) :: rules)]
-
-  let atom a = Atom a
-
-  let fpath p = p |> Fpath.to_string |> atom
-
-  let progn sexps = List (Atom "progn" :: sexps)
-
-  let run cmd = List (Atom "run" :: Conv.list_map atom cmd)
-
-  let include_ path = List [Atom "include"; fpath path]
-
-  let target path = List [Atom "target"; fpath path]
-
-  let action sexp = List [Atom "action"; sexp]
-
-  let with_stdout_to_target rule =
-    List [Atom "with-stdout-to"; Atom "%{target}"; rule]
-
-  let pipe_stdout pipe1 pipe2 = List [Atom "pipe-stdout"; pipe1; pipe2]
-
-  let echo lst = List (Atom "echo" :: Conv.list_map atom lst)
-
-  let rule sexps = List (Atom "rule" :: sexps)
-
-  let subdir_target dst sexps =
-    let dir, file = Fpath.split_base dst in
-    subdir dir [rule (target file :: sexps)]
-
-  let deps_glob glob =
-    List [Atom "deps"; List [Atom "glob_files_rec"; Atom glob]]
-
-  (* TODO: build a rule record, so we can go and rewrite paths to be relative to the dir as needed *)
-
-  let deps paths = List (Atom "deps" :: Conv.list_map fpath paths)
-
-  let deps_glob_paths glob paths =
-    List
-      (Atom "deps"
-      :: List [Atom "glob_files_rec"; Atom glob]
-      :: Conv.list_map fpath paths
-      )
-
-  let deps_include path = List [Atom "deps"; List [Atom "include"; fpath path]]
-
-  let alias x = List [Atom "alias"; Atom x]
-
-  let alias_deps x deps =
-    List
-      [Atom "alias"; List [Atom "name"; Atom x]; List [Atom "deps"; Atom deps]]
-
-  let _diff path1 path2 = List [Atom "diff"; fpath path1; fpath path2]
-end
-
 let is_empty_file path =
   let st = Unix.LargeFile.stat (Fpath.to_string path) in
   Int64.compare st.Unix.LargeFile.st_size 0L = 0
@@ -312,7 +239,8 @@ let parse_rules_from_stdin () =
 let foreach set f =
   set
   |> Fpath.Set.to_seq
-  |> Seq.concat_map @@ fun file -> file |> f |> List.to_seq
+  |> Seq.map f
+  |> Seq.fold_left Dune_stanzas.merge Dune_stanzas.empty
 
 let read_lines file =
   let ch = open_in (Fpath.to_string file) in
@@ -473,109 +401,77 @@ let update_rules ~filter self_sexp deps =
       ; Fpath.Set.map (Fpath.add_ext ".symbols") o_files
       ]
   in
-  let open DuneRule in
+  let open Dune_stanzas in
   let ml_symbols_rules =
     foreach ml_files @@ fun ml_file ->
-    subdir_target
-      (Fpath.add_ext ".symbols" ml_file)
-      [
-        deps [Fpath.base ml_file]
-      ; action
-        @@ with_stdout_to_target
-        @@ run ["%{bin:lintcstubs_primitives_of_ml}"; "%{deps}"]
-      ]
+    rule (target [Fpath.add_ext ".symbols" ml_file]) [dep_file ml_file]
+    @@ with_stdout_to_target
+    @@ run "%{bin:lintcstubs_primitives_of_ml}" ["%{deps}"]
   and c_symbols_rules =
     foreach o_files @@ fun o_file ->
-    subdir_target
-      (Fpath.add_ext ".symbols" o_file)
-      [
-        deps [o_file |> Fpath.base]
-      ; action
-        @@ with_stdout_to_target
-        @@ run ["nm"; "-A"; "-g"; "-P"; "%{deps}"]
-      ]
+    rule (target [Fpath.add_ext ".symbols" o_file]) [dep_file o_file]
+    @@ with_stdout_to_target
+    @@ run "nm" ["-A"; "-g"; "-P"; "%{deps}"]
   and cmt_rules =
     foreach cmt_files @@ fun cmt_file ->
     (* TODO: assumes there are exactly 2 dirs here, use a ml to cmt map instead *)
     let cmt_file' = to_cmtfile' cmt_file in
     (* FIXME: better tracking between ml -> cmt dep *)
     if not (Fpath.Set.mem cmt_file' cmt_files') then
-      []
+      empty
     else
       let cmt_file =
         Fpath.relativize ~root:Fpath.(parent cmt_file') cmt_file |> Option.get
       in
-      List.concat
-        [
-          (* TODO: subdir_target should make the adjustments *)
-          subdir_target
-            (Fpath.add_ext ".model.c" cmt_file')
-            [
-              deps [cmt_file]
-            ; action
-              @@ with_stdout_to_target
-              @@ progn
-                   [
-                     run ["%{bin:lintcstubs_genwrap}"; "%{deps}"]
-                   ; run ["%{bin:lintcstubs_genmain}"; "%{deps}"]
-                   ]
-            ]
-        ; subdir_target
-            (Fpath.set_ext ".ml.h" cmt_file')
-            [
-              deps [cmt_file]
-            ; action
-              @@ with_stdout_to_target
-              @@ run ["%{bin:lintcstubs_arity_cmt}"; "%{deps}"]
-            ]
-        ]
+      merge
+        (rule (target [Fpath.add_ext ".model.c" cmt_file']) [dep_file cmt_file]
+        @@ with_stdout_to_target
+        @@ progn
+             [
+               run "%{bin:lintcstubs_genwrap}" ["%{deps}"]
+             ; run "%{bin:lintcstubs_genmain}" ["%{deps}"]
+             ]
+        )
+        (rule (target [Fpath.set_ext ".ml.h" cmt_file']) [dep_file cmt_file]
+        @@ with_stdout_to_target
+        @@ run "%{bin:lintcstubs_arity_cmt}" ["%{deps}"]
+        )
   (* TODO: group based on symbols, fall back to everything in one when no symbols *)
   and lint_rules c_files =
-    List.to_seq
+    List.fold_left merge empty
       [
         rule
-          [
-            target (Fpath.v "primitives.h")
-          ; deps (Fpath.Set.elements h_files)
-          ; action @@ with_stdout_to_target @@ run ["cat"; "%{deps}"]
-          ]
+          (target [Fpath.v "primitives.h"])
+          (h_files |> Fpath.Set.to_seq |> Seq.map dep_file |> List.of_seq)
+        @@ with_stdout_to_target
+        @@ run "cat" ["%{deps}"]
       ; rule
-          [
-            target (Fpath.v "lintcstubs.sarif") (* TODO: flags *)
-          ; deps
-              (Fpath.Set.elements
-                 (Fpath.Set.add (Fpath.v "primitives.h")
-                    (Fpath.Set.union c_files h_files)
-                 )
-              )
-          ; action
-            @@ run
-                 [
-                   "%{bin:lintcstubs}"
-                 ; "-o"
-                 ; "%{target}"
-                 ; "-I"
-                 ; "."
-                 ; "-I"
-                 ; "%{ocaml_where}"
-                 ; "--conf"
-                 ; "lintcstubs.json"
-                 ; "%{deps}"
-                 ]
-          ]
-      ; alias_deps "runtest" "lintcstubs.sarif"
+          (target [Fpath.v "lintcstubs.sarif"]) (* TODO: flags *)
+          (Fpath.Set.union c_files h_files
+          |> Fpath.Set.add @@ Fpath.v "primitives.h"
+          |> Fpath.Set.to_seq
+          |> Seq.map dep_file
+          |> List.of_seq
+          )
+        @@ run "%{bin:lintcstubs}"
+             [
+               "-o"
+             ; "%{target}"
+             ; "-I"
+             ; "."
+             ; "-I"
+             ; "%{ocaml_where}"
+             ; "--conf"
+             ; "lintcstubs.json"
+             ; "%{deps}"
+             ]
+      ; alias_deps "runtest" [dep_file @@ Fpath.v "lintcstubs.sarif"]
       ]
   and self =
-    Seq.return
-    @@ rule
-         [
-           target self_sexp
-         ; deps (Fpath.Set.elements all_deps)
-         ; List [Atom "mode"; Atom "promote"]
-         ; action
-           @@ with_stdout_to_target
-           @@ run ["%{bin:lintcstubs_gen_rules}"; "--update"; "%{deps}"]
-         ]
+    rule ~mode:`promote (target self_sexp)
+      (all_deps |> Fpath.Set.to_seq |> Seq.map dep_file |> List.of_seq)
+    @@ with_stdout_to_target
+    @@ run "%{bin:lintcstubs_gen_rules}" ["--update"; "%{deps}"]
   in
   [
     ml_symbols_rules
@@ -584,9 +480,7 @@ let update_rules ~filter self_sexp deps =
   ; lint_rules (Fpath.Set.union c_files model_files)
   ; self
   ]
-  |> List.to_seq
-  |> Seq.concat
-  |> List.of_seq
+  |> List.fold_left merge empty
 
 let is_rooted_cwd = Fpath.is_rooted ~root:(Fpath.v ".")
 
@@ -650,8 +544,10 @@ let () =
   let self_sexp = Fpath.v "lintcstubs.sexp" in
   let rules =
     if Fpath.Set.is_empty files then
-      generate_rules self_sexp
+      generate_rules [self_sexp]
     else
-      update_rules ~filter:true self_sexp files
+      update_rules ~filter:true [self_sexp] files
   in
-  rules |> List.iter (Format.printf "%a@." @@ Sexp.pp_hum_indent 2)
+  rules
+  |> Dune_stanzas.sexp_list_of_t
+  |> List.iter (Format.printf "%a@." @@ Sexp.pp_hum_indent 2)
