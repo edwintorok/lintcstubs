@@ -445,7 +445,7 @@ let update_rules ~filter self_sexp deps =
           (h_files |> Fpath.Set.to_seq |> Seq.map dep_file |> List.of_seq)
         @@ with_stdout_to_target
         @@ run "cat" ["%{deps}"]
-      ; rule
+      ; rule ~alias:"runtest"
           (target [Fpath.v "lintcstubs.sarif"]) (* TODO: flags *)
           (Fpath.Set.union c_files h_files
           |> Fpath.Set.add @@ Fpath.v "primitives.h"
@@ -465,7 +465,6 @@ let update_rules ~filter self_sexp deps =
              ; "lintcstubs.json"
              ; "%{deps}"
              ]
-      ; alias_deps "runtest" [dep_file @@ Fpath.v "lintcstubs.sarif"]
       ]
   and self =
     rule ~mode:`promote (target self_sexp)

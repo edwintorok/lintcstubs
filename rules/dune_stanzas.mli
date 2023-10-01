@@ -28,13 +28,11 @@ val with_stdout_to_target : action -> action
 
 val rule :
      ?mode:[`standard | `fallback | `promote]
-  -> ?alias:alias
+  -> ?alias:string
   -> target
   -> dep list
   -> action
   -> t
-
-val alias_deps : string -> dep list -> t
 
 val merge : t -> t -> t
 
