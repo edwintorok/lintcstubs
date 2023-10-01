@@ -10,10 +10,11 @@ module Filename : sig
   type t
 end
 
-module Target: sig
+module Target : sig
   type fullpath
+
   type basepath
-  
+
   type 'a t
 
   val pp : 'a t Fmt.t
@@ -45,10 +46,8 @@ end
 
 type t
 
-val rule: ?mode:Mode.t -> Target.fullpath Target.t -> Deps.t -> Action.t -> t
+val rule : ?mode:Mode.t -> Target.fullpath Target.t -> Deps.t -> Action.t -> t
 
 val merge : t -> t -> t
 
 val sexp_of_t : t -> Sexplib0.Sexp.t
-
-

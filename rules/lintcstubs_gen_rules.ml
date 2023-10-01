@@ -8,16 +8,15 @@ module DuneRule = struct
   open Sexp
   open Sexplib.Std
 
+  (*
+     tagless-final
 
-  (* 
-  tagless-final
-  
-  targets/target chosen based on #list
-  extract common prefix for target, assert that it is the same for all,
-  type target = subdir * basename list
-  type ... = subdir -> sexp
+     targets/target chosen based on #list
+     extract common prefix for target, assert that it is the same for all,
+     type target = subdir * basename list
+     type ... = subdir -> sexp
 
-  rule receives target, and gives subdir to all its other fields.... and constructs sexp
+     rule receives target, and gives subdir to all its other fields.... and constructs sexp
   *)
 
   let subdir dir rules =
@@ -122,7 +121,6 @@ let build_path path = Fpath.(project_root / "_build" // v path |> normalize)
 let cwd_from_root =
   let root_abs = Fpath.(cwd // project_root) in
   Fpath.relativize ~root:root_abs cwd |> Option.get |> Fpath.normalize
-  
 
 module File = struct
   type t = Fpath.t
@@ -140,7 +138,6 @@ module File = struct
         if !debug then Format.eprintf "Could not parse: %a@." Sexp.pp_hum file ;
         None
 end
-
 
 module Target = struct
   type t = Fpath.t
@@ -187,14 +184,14 @@ module Action = struct
              }
           )
     | [Atom "copy"; Atom source; Atom target] ->
-        Fpath.(relativize ~root:cwd_from_root (v source)) |> Option.map @@ fun source ->
-          (Copy
+        Fpath.(relativize ~root:cwd_from_root (v source))
+        |> Option.map @@ fun source ->
+           Copy
              {
-        (* TODO: bugfix dune-compiledb too !*)
+               (* TODO: bugfix dune-compiledb too !*)
                source= Fpath.normalize source
              ; target= project_path target
              }
-          )
     | sexp ->
         if !debug then
           Format.eprintf "@[<v2>Unknown action:@,%a@]@." Sexp.pp_hum (List sexp) ;
@@ -266,38 +263,47 @@ module Rule = struct
     | _ ->
         None
 
-  let dep_of r = r.deps |> List.to_seq |> Seq.map @@ fun dep ->
-    let dep' = Fpath.(cwd // dep) in
-    let dep'' = Fpath.normalize dep' in
-    let dep'''= Fpath.relativize ~root:cwd dep'' |> Option.get  in
-    if !debug then
-      Format.eprintf "dep: %a -> %a -> %a@," Fpath.pp dep' Fpath.pp dep'' Fpath.pp dep''';
-    dep'''
+  let dep_of r =
+    r.deps
+    |> List.to_seq
+    |> Seq.map @@ fun dep ->
+       let dep' = Fpath.(cwd // dep) in
+       let dep'' = Fpath.normalize dep' in
+       let dep''' = Fpath.relativize ~root:cwd dep'' |> Option.get in
+       if !debug then
+         Format.eprintf "dep: %a -> %a -> %a@," Fpath.pp dep' Fpath.pp dep''
+           Fpath.pp dep''' ;
+       dep'''
 
   let deps_of rules =
     rules |> List.to_seq |> Seq.concat_map dep_of |> Fpath.Set.of_seq
 
   let cmt_map_of_entry = function
-    | {action = Action.ChdirRun _; targets; deps} ->
-      let ml_file = List.find_opt (Fpath.has_ext ".ml") deps
-      and cmt_file = List.find_opt (Fpath.has_ext ".cmt") targets in
-      (match ml_file, cmt_file with
-      | Some ml, Some cmt -> 
-        let root = Fpath.parent ml in
-        let res = Fpath.relativize ~root cmt |> Option.get |> Fpath.normalize in
-        if !debug then Format.eprintf "cmt: %a, root: %a -> %a@." Fpath.pp cmt Fpath.pp root Fpath.pp res;
-        Some (ml, res)
-      | _ -> None
+    | {action= Action.ChdirRun _; targets; deps} -> (
+        let ml_file = List.find_opt (Fpath.has_ext ".ml") deps
+        and cmt_file = List.find_opt (Fpath.has_ext ".cmt") targets in
+        match (ml_file, cmt_file) with
+        | Some ml, Some cmt ->
+            let root = Fpath.parent ml in
+            let res =
+              Fpath.relativize ~root cmt |> Option.get |> Fpath.normalize
+            in
+            if !debug then
+              Format.eprintf "cmt: %a, root: %a -> %a@." Fpath.pp cmt Fpath.pp
+                root Fpath.pp res ;
+            Some (ml, res)
+        | _ ->
+            None
       )
-    | _ -> None
+    | _ ->
+        None
 
   let cmt_map_of rules =
     rules |> List.to_seq |> Seq.filter_map cmt_map_of_entry |> Fpath.Map.of_seq
-    
+
   let pp_source_map =
     Fpath.Map.pp @@ fun ppf (dst, src) ->
     Format.fprintf ppf "%a <- %a" Fpath.pp dst Fpath.pp src
-
 end
 
 let parse_rules_from_stdin () =
@@ -326,135 +332,146 @@ let read_symbols file =
          let file = String.sub file 0 (String.length file - 1) in
          (Fpath.v file, symbol)
      | _ ->
-
          invalid_arg ("Cannot parse symbols line: " ^ line)
 
 (* TODO
-    
-let do_group_symbols files =
-  let symbols_of_files =
-    Fpath.Set.fold
-      (fun file map ->
-        let symbols = read_symbols file in
-        symbols
-        |> List.fold_left
-             (fun map (file, symbol) ->
-               Fpath.Map.update file
-                 (fun old ->
-                   let old = Option.value ~default:SymbolSet.empty old in
-                   Some (SymbolSet.add symbol old)
-                 )
-                 map
-             )
-             map
-      )
-      files Fpath.Map.empty
-  in
-  let uf = UF.new_store () in
-  let ufiles = Stack.create () in
-  let (_ : _ SymbolMap.t) =
-    Fpath.Map.fold
-      (fun file symbols map ->
-        let file = UF.make uf (Fpath.Set.singleton file) in
-        Stack.push file ufiles ;
-        SymbolSet.fold
-          (fun symbol ->
-            SymbolMap.update symbol (fun uref_opt ->
-                let uref = Option.value ~default:file uref_opt in
-                Some (UF.merge uf Fpath.Set.union uref file)
-            )
-          )
-          symbols map
-      )
-      symbols_of_files SymbolMap.empty
-  in
-  ufiles
-  |> Stack.iter @@ fun ufile ->
-     if UF.is_representative uf ufile then
-       let files = UF.get uf ufile in
-       let main = Fpath.Set.choose files |> Option.get in
-       Rule.
-         [
-           rule
-             [
-               deps_glob_paths "*.ml.h"
-                 (files
-                 |> Fpath.Set.map (fun file ->
-                        match Fpath.get_ext file with
-                        | ".ml" ->
-                            Fpath.set_ext ~multi:true ".cmt.model.c" file
-                        | ".o" ->
-                            Fpath.set_ext ~multi:true ".c" file
-                        | _ ->
-                            assert false
-                    )
-                 |> Fpath.Set.elements
-                 )
-             ; target (Fpath.set_ext "sarif" main)
-               (* TODO: compile_commands.json *)
-             ; alias "lintcstubs"
-             ; action
-               @@ run
-                    [
-                      "%{bin:lintcstubs}"
-                    ; "--conf"
-                    ; "lintcstubs.json"
-                    ; "-o"
-                    ; "%{target}"
-                    ; "-I"
-                    ; "%{ocaml_where}"
-                    ; "%{deps}"
-                    ]
-             ]
-         ]
-       |> List.iter (Format.printf "%a@," @@ Sexp.pp_hum_indent 2)
 
-let () =
-  let usage_msg =
-    Printf.sprintf "%s [--root root] [--foreach glob FILE...]"
-      Sys.executable_name
-  in
-   
-    
+   let do_group_symbols files =
+     let symbols_of_files =
+       Fpath.Set.fold
+         (fun file map ->
+           let symbols = read_symbols file in
+           symbols
+           |> List.fold_left
+                (fun map (file, symbol) ->
+                  Fpath.Map.update file
+                    (fun old ->
+                      let old = Option.value ~default:SymbolSet.empty old in
+                      Some (SymbolSet.add symbol old)
+                    )
+                    map
+                )
+                map
+         )
+         files Fpath.Map.empty
+     in
+     let uf = UF.new_store () in
+     let ufiles = Stack.create () in
+     let (_ : _ SymbolMap.t) =
+       Fpath.Map.fold
+         (fun file symbols map ->
+           let file = UF.make uf (Fpath.Set.singleton file) in
+           Stack.push file ufiles ;
+           SymbolSet.fold
+             (fun symbol ->
+               SymbolMap.update symbol (fun uref_opt ->
+                   let uref = Option.value ~default:file uref_opt in
+                   Some (UF.merge uf Fpath.Set.union uref file)
+               )
+             )
+             symbols map
+         )
+         symbols_of_files SymbolMap.empty
+     in
+     ufiles
+     |> Stack.iter @@ fun ufile ->
+        if UF.is_representative uf ufile then
+          let files = UF.get uf ufile in
+          let main = Fpath.Set.choose files |> Option.get in
+          Rule.
+            [
+              rule
+                [
+                  deps_glob_paths "*.ml.h"
+                    (files
+                    |> Fpath.Set.map (fun file ->
+                           match Fpath.get_ext file with
+                           | ".ml" ->
+                               Fpath.set_ext ~multi:true ".cmt.model.c" file
+                           | ".o" ->
+                               Fpath.set_ext ~multi:true ".c" file
+                           | _ ->
+                               assert false
+                       )
+                    |> Fpath.Set.elements
+                    )
+                ; target (Fpath.set_ext "sarif" main)
+                  (* TODO: compile_commands.json *)
+                ; alias "lintcstubs"
+                ; action
+                  @@ run
+                       [
+                         "%{bin:lintcstubs}"
+                       ; "--conf"
+                       ; "lintcstubs.json"
+                       ; "-o"
+                       ; "%{target}"
+                       ; "-I"
+                       ; "%{ocaml_where}"
+                       ; "%{deps}"
+                       ]
+                ]
+            ]
+          |> List.iter (Format.printf "%a@," @@ Sexp.pp_hum_indent 2)
+
+   let () =
+     let usage_msg =
+       Printf.sprintf "%s [--root root] [--foreach glob FILE...]"
+         Sys.executable_name
+     in
 *)
 
 let update_rules ~filter self_sexp deps =
   let to_cmtfile' cmt_file =
     let cmt_dir, cmt_base = Fpath.split_base cmt_file in
-     Fpath.((cmt_dir |> parent |> parent) // cmt_base)
-   in
-  if !debug then Format.eprintf "update_rules: %a@." Fpath.Set.dump deps; 
-  let ml_files = Fpath.Set.filter (Fpath.has_ext ".ml") deps
-  and o_files = Fpath.Set.filter (fun p -> Fpath.has_ext ".o" p && not (Fpath.has_ext ".model.o" p)) deps
-  and cmt_files = Fpath.Set.filter (Fpath.has_ext ".cmt") deps
-  and symbols =
-    Fpath.Set.filter (Fpath.has_ext ".symbols") deps
+    Fpath.((cmt_dir |> parent |> parent) // cmt_base)
   in
+  if !debug then Format.eprintf "update_rules: %a@." Fpath.Set.dump deps ;
+  let ml_files = Fpath.Set.filter (Fpath.has_ext ".ml") deps
+  and o_files =
+    Fpath.Set.filter
+      (fun p -> Fpath.has_ext ".o" p && not (Fpath.has_ext ".model.o" p))
+      deps
+  and cmt_files = Fpath.Set.filter (Fpath.has_ext ".cmt") deps
+  and symbols = Fpath.Set.filter (Fpath.has_ext ".symbols") deps in
 
   let empty_symbols = Fpath.Set.filter is_empty_file symbols in
-  let ml_files = Fpath.Set.diff ml_files (Fpath.Set.map Fpath.rem_ext empty_symbols) in
+  let ml_files =
+    Fpath.Set.diff ml_files (Fpath.Set.map Fpath.rem_ext empty_symbols)
+  in
   let symbols = Fpath.Set.diff symbols empty_symbols in
 
   let cmt_files' = Fpath.Set.map to_cmtfile' cmt_files in
 
-  let neg_cmt = Fpath.Set.map (Fpath.set_ext ~multi:true ".cmt") empty_symbols in
+  let neg_cmt =
+    Fpath.Set.map (Fpath.set_ext ~multi:true ".cmt") empty_symbols
+  in
   let cmt_files' = Fpath.Set.diff cmt_files' neg_cmt in
 
-  if !debug then Format.eprintf "empty_symbols: %a@,ml_files: %a@,symbols: %a@,neg_cmt: %a@,cmt_files: %a@." Fpath.Set.dump empty_symbols
-    Fpath.Set.dump ml_files Fpath.Set.dump symbols Fpath.Set.dump neg_cmt Fpath.Set.dump cmt_files';
+  if !debug then
+    Format.eprintf
+      "empty_symbols: %a@,\
+       ml_files: %a@,\
+       symbols: %a@,\
+       neg_cmt: %a@,\
+       cmt_files: %a@." Fpath.Set.dump empty_symbols Fpath.Set.dump ml_files
+      Fpath.Set.dump symbols Fpath.Set.dump neg_cmt Fpath.Set.dump cmt_files' ;
 
   let model_files = Fpath.Set.map (Fpath.add_ext ".model.c") cmt_files'
-  and h_files = Fpath.Set.map (Fpath.set_ext ".ml.h") cmt_files'
-  in
+  and h_files = Fpath.Set.map (Fpath.set_ext ".ml.h") cmt_files' in
   let c_files = Fpath.Set.map (Fpath.set_ext ".c") o_files in
   let all_deps =
     List.fold_left Fpath.Set.union Fpath.Set.empty
-      [ml_files; o_files; cmt_files; symbols
+      [
+        ml_files
+      ; o_files
+      ; cmt_files
+      ; symbols
       ; Fpath.Set.map (Fpath.add_ext ".symbols") ml_files
       ; model_files
       ; h_files
       ; Fpath.Set.map (Fpath.add_ext ".symbols") o_files
-    ]
+      ]
   in
   let open DuneRule in
   let ml_symbols_rules =
@@ -482,50 +499,72 @@ let update_rules ~filter self_sexp deps =
     (* TODO: assumes there are exactly 2 dirs here, use a ml to cmt map instead *)
     let cmt_file' = to_cmtfile' cmt_file in
     (* FIXME: better tracking between ml -> cmt dep *)
-    if not (Fpath.Set.mem cmt_file' cmt_files') then []
+    if not (Fpath.Set.mem cmt_file' cmt_files') then
+      []
     else
-    let cmt_file = Fpath.relativize ~root:Fpath.(parent cmt_file') cmt_file |> Option.get in
-    List.concat
-      [
-       (* TODO: subdir_target should make the adjustments *)
-        subdir_target
-          (Fpath.add_ext ".model.c" cmt_file')
-          [
-            deps [cmt_file]
-          ; action
-            @@ with_stdout_to_target
-            @@ progn
-                 [
-                   run ["%{bin:lintcstubs_genwrap}"; "%{deps}"]
-                 ; run ["%{bin:lintcstubs_genmain}"; "%{deps}"]
-                 ]
-          ]
-      ; subdir_target
-          (Fpath.set_ext ".ml.h" cmt_file')
-          [
-            deps [cmt_file]
-          ; action
-            @@ with_stdout_to_target
-            @@ run ["%{bin:lintcstubs_arity_cmt}"; "%{deps}"]
-          ]
-      ]
+      let cmt_file =
+        Fpath.relativize ~root:Fpath.(parent cmt_file') cmt_file |> Option.get
+      in
+      List.concat
+        [
+          (* TODO: subdir_target should make the adjustments *)
+          subdir_target
+            (Fpath.add_ext ".model.c" cmt_file')
+            [
+              deps [cmt_file]
+            ; action
+              @@ with_stdout_to_target
+              @@ progn
+                   [
+                     run ["%{bin:lintcstubs_genwrap}"; "%{deps}"]
+                   ; run ["%{bin:lintcstubs_genmain}"; "%{deps}"]
+                   ]
+            ]
+        ; subdir_target
+            (Fpath.set_ext ".ml.h" cmt_file')
+            [
+              deps [cmt_file]
+            ; action
+              @@ with_stdout_to_target
+              @@ run ["%{bin:lintcstubs_arity_cmt}"; "%{deps}"]
+            ]
+        ]
   (* TODO: group based on symbols, fall back to everything in one when no symbols *)
   and lint_rules c_files =
     List.to_seq
-    [ rule
-     [ target (Fpath.v "primitives.h")
-      ; deps (Fpath.Set.elements h_files)
-      ; action @@ with_stdout_to_target @@ run ["cat"; "%{deps}"]
-    ]
-    ; rule
-         [
-           target (Fpath.v "lintcstubs.sarif") (* TODO: flags *)
-         ; deps (Fpath.Set.elements (Fpath.Set.add (Fpath.v "primitives.h") (Fpath.Set.union c_files h_files)))
-         ; action
-           @@ run ["%{bin:lintcstubs}"; "-o"; "%{target}"; "-I"; "."; "-I"; "%{ocaml_where}"; "--conf"; "lintcstubs.json"; "%{deps}"]
-         ]
-    ; alias_deps "runtest" "lintcstubs.sarif"
-  ]
+      [
+        rule
+          [
+            target (Fpath.v "primitives.h")
+          ; deps (Fpath.Set.elements h_files)
+          ; action @@ with_stdout_to_target @@ run ["cat"; "%{deps}"]
+          ]
+      ; rule
+          [
+            target (Fpath.v "lintcstubs.sarif") (* TODO: flags *)
+          ; deps
+              (Fpath.Set.elements
+                 (Fpath.Set.add (Fpath.v "primitives.h")
+                    (Fpath.Set.union c_files h_files)
+                 )
+              )
+          ; action
+            @@ run
+                 [
+                   "%{bin:lintcstubs}"
+                 ; "-o"
+                 ; "%{target}"
+                 ; "-I"
+                 ; "."
+                 ; "-I"
+                 ; "%{ocaml_where}"
+                 ; "--conf"
+                 ; "lintcstubs.json"
+                 ; "%{deps}"
+                 ]
+          ]
+      ; alias_deps "runtest" "lintcstubs.sarif"
+      ]
   and self =
     Seq.return
     @@ rule
@@ -538,28 +577,39 @@ let update_rules ~filter self_sexp deps =
            @@ run ["%{bin:lintcstubs_gen_rules}"; "--update"; "%{deps}"]
          ]
   in
-  [ml_symbols_rules; c_symbols_rules; cmt_rules;
-   lint_rules (Fpath.Set.union c_files model_files);
-   self]
+  [
+    ml_symbols_rules
+  ; c_symbols_rules
+  ; cmt_rules
+  ; lint_rules (Fpath.Set.union c_files model_files)
+  ; self
+  ]
   |> List.to_seq
   |> Seq.concat
   |> List.of_seq
 
-let is_rooted_cwd = Fpath.is_rooted ~root:(Fpath.v ".")  
+let is_rooted_cwd = Fpath.is_rooted ~root:(Fpath.v ".")
 
 let generate_rules self_sexp =
   let rules = parse_rules_from_stdin () in
-  let source_map = Rule.source_map_of rules
-  and deps = Rule.deps_of rules in
-  if !debug then Format.eprintf "source map: %a@." Rule.pp_source_map source_map;
-  let deps = deps |> Fpath.Set.map @@ fun dep ->
-    Fpath.Map.find_opt dep source_map |> Option.value ~default:dep in
+  let source_map = Rule.source_map_of rules and deps = Rule.deps_of rules in
+  if !debug then Format.eprintf "source map: %a@." Rule.pp_source_map source_map ;
+  let deps =
+    deps
+    |> Fpath.Set.map @@ fun dep ->
+       Fpath.Map.find_opt dep source_map |> Option.value ~default:dep
+  in
   let cmt_map = Rule.cmt_map_of rules in
   let cmt_files =
-    Fpath.Set.of_seq (
-      cmt_map |> Fpath.Map.to_seq |> Seq.map @@ fun (ml, cmt) ->
-      let ml = Fpath.Map.find_opt ml source_map |> Option.value ~default:ml in
-      Fpath.((parent ml) // cmt |> normalize))
+    Fpath.Set.of_seq
+      (cmt_map
+      |> Fpath.Map.to_seq
+      |> Seq.map @@ fun (ml, cmt) ->
+         let ml =
+           Fpath.Map.find_opt ml source_map |> Option.value ~default:ml
+         in
+         Fpath.(parent ml // cmt |> normalize)
+      )
   in
   let deps = Fpath.Set.union deps cmt_files in
   update_rules ~filter:false self_sexp (deps |> Fpath.Set.filter is_rooted_cwd)
@@ -573,14 +623,12 @@ let parse_cmdline () =
   *)
   let usage_msg =
     String.concat "\n"
-    [
-    Printf.sprintf
-      "dune rules -r | %s [-d]"
-      Sys.executable_name
-    ; Printf.sprintf
-      "%s [-d] --update [FILE.ml.symbols... FILE.c.symbols... FILE.cmt...]"
-      Sys.executable_name
-    ]
+      [
+        Printf.sprintf "dune rules -r | %s [-d]" Sys.executable_name
+      ; Printf.sprintf
+          "%s [-d] --update [FILE.ml.symbols... FILE.c.symbols... FILE.cmt...]"
+          Sys.executable_name
+      ]
   in
   (* use Arg for parsing to minimize dependencies *)
   let files = ref Fpath.Set.empty in
