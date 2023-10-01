@@ -6,11 +6,13 @@
 
 (executable
  (public_name lintcstubs_gen_rules)
- (modules lintcstubs_gen_rules)
+ (modules lintcstubs_gen_rules dune_stanzas)
  (package lintcstubs)
- (libraries sexplib fpath unix unionFind))
+ (lint
+  (pps ppx_sexp_conv)
+ )
+ (libraries sexplib fpath unix unionFind fmt))
 
-(include lintcstubs.sexp)
 
 (cram
  (deps (package lintcstubs) %{bin:lintcstubs_gen_rules})

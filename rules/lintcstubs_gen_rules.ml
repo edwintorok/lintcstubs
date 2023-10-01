@@ -6,6 +6,19 @@ let root = ref None
 
 module DuneRule = struct
   open Sexp
+  open Sexplib.Std
+
+
+  (* 
+  tagless-final
+  
+  targets/target chosen based on #list
+  extract common prefix for target, assert that it is the same for all,
+  type target = subdir * basename list
+  type ... = subdir -> sexp
+
+  rule receives target, and gives subdir to all its other fields.... and constructs sexp
+  *)
 
   let subdir dir rules =
     if Fpath.is_current_dir dir then
@@ -42,6 +55,8 @@ module DuneRule = struct
 
   let deps_glob glob =
     List [Atom "deps"; List [Atom "glob_files_rec"; Atom glob]]
+
+  (* TODO: build a rule record, so we can go and rewrite paths to be relative to the dir as needed *)
 
   let deps paths = List (Atom "deps" :: Conv.list_map fpath paths)
 
