@@ -90,7 +90,8 @@ end = struct
 
   let split_base = Fpath.split_base
 
-  let relative_to ~root path = Fpath.relativize ~root path |> Option.get
+  let relative_to ~root path =
+    Fpath.relativize ~root path |> Option.get |> Fpath.normalize
 
   let compare = Fpath.compare
 
@@ -100,7 +101,9 @@ end = struct
 end
 
 let sexp_of_basepath _ = Sexp.List []
+
 let sexp_of_relativepath _ = Sexp.List []
+
 let sexp_of_fullpath _ = Sexp.List []
 
 let sexp_of_any _ = Sexp.List []
@@ -211,18 +214,15 @@ module Dep = struct
     | 'a Include.t ]
   [@@deriving_inline sexp_of]
 
-  
-let _ = fun (_ : 'a t) -> ()
-  
-let sexp_of_t : 'a . ('a -> Sexplib0.Sexp.t) -> 'a t -> Sexplib0.Sexp.t =
-  fun _of_a__004_ ->
-    function
+  let _ = fun (_ : 'a t) -> ()
+
+  let sexp_of_t : 'a. ('a -> Sexplib0.Sexp.t) -> 'a t -> Sexplib0.Sexp.t =
+   fun _of_a__004_ -> function
     | `file v__005_ ->
         Sexplib0.Sexp.List
           [Sexplib0.Sexp.Atom "file"; Filename.sexp_of_t _of_a__004_ v__005_]
     | `alias v__006_ ->
-        Sexplib0.Sexp.List
-          [Sexplib0.Sexp.Atom "alias"; sexp_of_string v__006_]
+        Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "alias"; sexp_of_string v__006_]
     | `alias_rec v__007_ ->
         Sexplib0.Sexp.List
           [Sexplib0.Sexp.Atom "alias_rec"; sexp_of_string v__007_]
@@ -234,9 +234,12 @@ let sexp_of_t : 'a . ('a -> Sexplib0.Sexp.t) -> 'a t -> Sexplib0.Sexp.t =
           [Sexplib0.Sexp.Atom "glob_files_rec"; Glob.sexp_of_t v__009_]
     | `source_tree v__010_ ->
         Sexplib0.Sexp.List
-          [Sexplib0.Sexp.Atom "source_tree";
-          Filename.sexp_of_t _of_a__004_ v__010_]
-    | `universe -> Sexplib0.Sexp.Atom "universe"
+          [
+            Sexplib0.Sexp.Atom "source_tree"
+          ; Filename.sexp_of_t _of_a__004_ v__010_
+          ]
+    | `universe ->
+        Sexplib0.Sexp.Atom "universe"
     | `package v__011_ ->
         Sexplib0.Sexp.List
           [Sexplib0.Sexp.Atom "package"; sexp_of_string v__011_]
@@ -246,17 +249,30 @@ let sexp_of_t : 'a . ('a -> Sexplib0.Sexp.t) -> 'a t -> Sexplib0.Sexp.t =
     | `sandbox v__013_ ->
         Sexplib0.Sexp.List
           [Sexplib0.Sexp.Atom "sandbox"; sexp_of_sandbox v__013_]
-    | #Include.t as v__014_ -> (Include.sexp_of_t _of_a__004_) v__014_
+    | #Include.t as v__014_ ->
+        (Include.sexp_of_t _of_a__004_) v__014_
+
   let _ = sexp_of_t
 
   [@@@end]
 
-  let map f (t: fullpath t) : relativepath t = match t with
-    | `file  p -> `file (f p)
-    | `source_tree p -> `source_tree (f p)
-    | `include_ p -> `include_ (f p)
-    | (`alias _ | `alias_rec _ | `glob_files _ | `glob_files_rec _ | `universe | `package _ | `env_var _ | `sandbox _) as t ->t 
-
+  let map f (t : fullpath t) : relativepath t =
+    match t with
+    | `file p ->
+        `file (f p)
+    | `source_tree p ->
+        `source_tree (f p)
+    | `include_ p ->
+        `include_ (f p)
+    | ( `alias _
+      | `alias_rec _
+      | `glob_files _
+      | `glob_files_rec _
+      | `universe
+      | `package _
+      | `env_var _
+      | `sandbox _ ) as t ->
+        t
 end
 
 module Mode = struct
@@ -305,63 +321,83 @@ module Rule = struct
 
   let _ = fun (_ : 'a rule) -> ()
 
-  
-let sexp_of_rule : 'a . ('a -> Sexplib0.Sexp.t) -> 'a rule -> Sexplib0.Sexp.t
-  =
-  fun _of_a__015_ ->
-    fun
-      { target = target__017_; targets = targets__022_; deps = deps__025_;
-        action = action__027_; mode = mode__031_; alias = alias__035_ }
-      ->
-      let bnds__016_ = ([] : _ Stdlib.List.t) in
-      let bnds__016_ =
-        match alias__035_ with
-        | Stdlib.Option.None -> bnds__016_
-        | Stdlib.Option.Some v__036_ ->
-            let arg__038_ = Alias.sexp_of_t v__036_ in
-            let bnd__037_ =
-              Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "alias"; arg__038_] in
-            (bnd__037_ :: bnds__016_ : _ Stdlib.List.t) in
-      let bnds__016_ =
-        match mode__031_ with
-        | Stdlib.Option.None -> bnds__016_
-        | Stdlib.Option.Some v__032_ ->
-            let arg__034_ = Mode.sexp_of_t v__032_ in
-            let bnd__033_ =
-              Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "mode"; arg__034_] in
-            (bnd__033_ :: bnds__016_ : _ Stdlib.List.t) in
-      let bnds__016_ =
-        match action__027_ with
-        | Stdlib.Option.None -> bnds__016_
-        | Stdlib.Option.Some v__028_ ->
-            let arg__030_ = sexp_of_action v__028_ in
-            let bnd__029_ =
-              Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "action"; arg__030_] in
-            (bnd__029_ :: bnds__016_ : _ Stdlib.List.t) in
-      let bnds__016_ =
-        let arg__026_ =
-          sexp_of_list (Dep.sexp_of_t sexp_of_relativepath) deps__025_ in
-        ((Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "deps"; arg__026_]) ::
-          bnds__016_ : _ Stdlib.List.t) in
-      let bnds__016_ =
-        if match targets__022_ with | [] -> true | _ -> false
-        then bnds__016_
-        else
-          (let arg__024_ =
-             (sexp_of_list (Filename.sexp_of_t sexp_of_basepath))
-               targets__022_ in
-           let bnd__023_ =
-             Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "targets"; arg__024_] in
-           (bnd__023_ :: bnds__016_ : _ Stdlib.List.t)) in
-      let bnds__016_ =
-        match target__017_ with
-        | Stdlib.Option.None -> bnds__016_
-        | Stdlib.Option.Some v__018_ ->
-            let arg__020_ = Filename.sexp_of_t sexp_of_basepath v__018_ in
-            let bnd__019_ =
-              Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "target"; arg__020_] in
-            (bnd__019_ :: bnds__016_ : _ Stdlib.List.t) in
-      Sexplib0.Sexp.List bnds__016_
+  let sexp_of_rule : 'a. ('a -> Sexplib0.Sexp.t) -> 'a rule -> Sexplib0.Sexp.t =
+   fun _of_a__015_
+       {
+         target= target__017_
+       ; targets= targets__022_
+       ; deps= deps__025_
+       ; action= action__027_
+       ; mode= mode__031_
+       ; alias= alias__035_
+       } ->
+    let bnds__016_ = ([] : _ Stdlib.List.t) in
+    let bnds__016_ =
+      match alias__035_ with
+      | Stdlib.Option.None ->
+          bnds__016_
+      | Stdlib.Option.Some v__036_ ->
+          let arg__038_ = Alias.sexp_of_t v__036_ in
+          let bnd__037_ =
+            Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "alias"; arg__038_]
+          in
+          (bnd__037_ :: bnds__016_ : _ Stdlib.List.t)
+    in
+    let bnds__016_ =
+      match mode__031_ with
+      | Stdlib.Option.None ->
+          bnds__016_
+      | Stdlib.Option.Some v__032_ ->
+          let arg__034_ = Mode.sexp_of_t v__032_ in
+          let bnd__033_ =
+            Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "mode"; arg__034_]
+          in
+          (bnd__033_ :: bnds__016_ : _ Stdlib.List.t)
+    in
+    let bnds__016_ =
+      match action__027_ with
+      | Stdlib.Option.None ->
+          bnds__016_
+      | Stdlib.Option.Some v__028_ ->
+          let arg__030_ = sexp_of_action v__028_ in
+          let bnd__029_ =
+            Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "action"; arg__030_]
+          in
+          (bnd__029_ :: bnds__016_ : _ Stdlib.List.t)
+    in
+    let bnds__016_ =
+      let arg__026_ =
+        sexp_of_list (Dep.sexp_of_t sexp_of_relativepath) deps__025_
+      in
+      ( Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "deps"; arg__026_] :: bnds__016_
+        : _ Stdlib.List.t
+        )
+    in
+    let bnds__016_ =
+      if match targets__022_ with [] -> true | _ -> false then
+        bnds__016_
+      else
+        let arg__024_ =
+          (sexp_of_list (Filename.sexp_of_t sexp_of_basepath)) targets__022_
+        in
+        let bnd__023_ =
+          Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "targets"; arg__024_]
+        in
+        (bnd__023_ :: bnds__016_ : _ Stdlib.List.t)
+    in
+    let bnds__016_ =
+      match target__017_ with
+      | Stdlib.Option.None ->
+          bnds__016_
+      | Stdlib.Option.Some v__018_ ->
+          let arg__020_ = Filename.sexp_of_t sexp_of_basepath v__018_ in
+          let bnd__019_ =
+            Sexplib0.Sexp.List [Sexplib0.Sexp.Atom "target"; arg__020_]
+          in
+          (bnd__019_ :: bnds__016_ : _ Stdlib.List.t)
+    in
+    Sexplib0.Sexp.List bnds__016_
+
   let _ = sexp_of_rule
 
   [@@@end]
@@ -370,12 +406,11 @@ let sexp_of_rule : 'a . ('a -> Sexplib0.Sexp.t) -> 'a rule -> Sexplib0.Sexp.t
 
   let _ = fun (_ : 'a t) -> ()
 
-  
-let sexp_of_t : 'a . ('a -> Sexplib0.Sexp.t) -> 'a t -> Sexplib0.Sexp.t =
-  fun _of_a__039_ ->
-    fun (`rule v__040_) ->
-      Sexplib0.Sexp.List
-        [Sexplib0.Sexp.Atom "rule"; sexp_of_rule _of_a__039_ v__040_]
+  let sexp_of_t : 'a. ('a -> Sexplib0.Sexp.t) -> 'a t -> Sexplib0.Sexp.t =
+   fun _of_a__039_ (`rule v__040_) ->
+    Sexplib0.Sexp.List
+      [Sexplib0.Sexp.Atom "rule"; sexp_of_rule _of_a__039_ v__040_]
+
   let _ = sexp_of_t
 
   [@@@end]
@@ -410,7 +445,16 @@ let rule ?mode ?alias orig_target deps action : t =
   let base, orig_target = Target.split_base orig_target in
   let target, targets = Target.to_pair orig_target in
   let rule : _ Rule.t =
-    `rule Rule.{target; targets; deps = List.map (Dep.map (Filename.relative_to ~root:base)) deps; action= Some action; mode; alias}
+    `rule
+      Rule.
+        {
+          target
+        ; targets
+        ; deps= List.map (Dep.map (Filename.relative_to ~root:base)) deps
+        ; action= Some action
+        ; mode
+        ; alias
+        }
   in
   Fpath.Map.singleton base @@ TargetMap.singleton orig_target rule
 
@@ -431,14 +475,16 @@ module Subdir = struct
 
   let _ = fun (_ : t) -> ()
 
-  
-let sexp_of_t =
-  (fun (arg0__041_, arg1__042_, arg2__043_) ->
-     let res0__044_ = let `subdir = arg0__041_ in Sexplib0.Sexp.Atom "subdir"
-     and res1__045_ = Filename.sexp_of_t sexp_of_fullpath arg1__042_
-     and res2__046_ = Rule.sexp_of_t sexp_of_basepath arg2__043_ in
-     Sexplib0.Sexp.List [res0__044_; res1__045_; res2__046_] : t ->
-                                                                 Sexplib0.Sexp.t)
+  let sexp_of_t =
+    ( fun (arg0__041_, arg1__042_, arg2__043_) ->
+        let res0__044_ =
+          let `subdir = arg0__041_ in
+          Sexplib0.Sexp.Atom "subdir"
+        and res1__045_ = Filename.sexp_of_t sexp_of_fullpath arg1__042_
+        and res2__046_ = Rule.sexp_of_t sexp_of_basepath arg2__043_ in
+        Sexplib0.Sexp.List [res0__044_; res1__045_; res2__046_]
+      : t -> Sexplib0.Sexp.t
+      )
 
   let _ = sexp_of_t
 
@@ -458,6 +504,8 @@ let sexp_list_of_t t =
        if Fpath.is_current_dir base then
          target_rules |> Seq.map (Rule.sexp_of_t sexp_of_any)
        else
-         target_rules |> Seq.map (subdir @@ Filename.v base) |> Seq.map Subdir.sexp_of_t
+         target_rules
+         |> Seq.map (subdir @@ Filename.v base)
+         |> Seq.map Subdir.sexp_of_t
   in
   rules |> Seq.map fixup_sexp |> List.of_seq

@@ -420,9 +420,6 @@ let update_rules ~filter self_sexp deps =
     if not (Fpath.Set.mem cmt_file' cmt_files') then
       empty
     else
-      let cmt_file =
-        Fpath.relativize ~root:Fpath.(parent cmt_file') cmt_file |> Option.get
-      in
       merge
         (rule (target [Fpath.add_ext ".model.c" cmt_file']) [dep_file cmt_file]
         @@ with_stdout_to_target
