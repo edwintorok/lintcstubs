@@ -91,10 +91,93 @@ Now generate rules:
   $ dune clean
   $ cd src
   $ dune rules -r --root=.. | lintcstubs_gen_rules >lintcstubs.sexp
+  Entering directory '..'
+  Leaving directory '..'
   $ cat lintcstubs.sexp
+  (rule (target lintcstubs.sarif)
+    (deps (file cstubs2/mystubs2__Foo3.cmt.model.c)
+      (file cstubs2/mystubs2__Foo3.ml.h)
+      (file other/dune__exe__Foo2.cmt.model.c)
+      (file other/dune__exe__Foo2.ml.h) (file primitives.h))
+    (action
+      (run %{bin:lintcstubs} -o %{target} -I . -I %{ocaml_where} --conf
+        lintcstubs.json %{deps}))
+    (alias runtest))
+  (rule (target lintcstubs.sexp)
+    (deps (file cstubs2/.mystubs2.objs/byte/mystubs2__Foo3.cmt)
+      (file cstubs2/foo3.ml) (file cstubs2/foo3.ml.symbols)
+      (file cstubs2/mystubs2__Foo3.cmt.model.c)
+      (file cstubs2/mystubs2__Foo3.ml.h)
+      (file other/.main.eobjs/byte/dune__exe__Foo2.cmt)
+      (file other/dune__exe__Foo2.cmt.model.c)
+      (file other/dune__exe__Foo2.ml.h) (file other/foo2.ml)
+      (file other/foo2.ml.symbols) (file other/main.ml)
+      (file other/main.ml.symbols))
+    (action
+      (with-stdout-to %{target}
+        (run %{bin:lintcstubs_gen_rules} --update %{deps})))
+    (mode promote))
+  (rule (target primitives.h)
+    (deps (file cstubs2/mystubs2__Foo3.ml.h) (file other/dune__exe__Foo2.ml.h))
+    (action (with-stdout-to %{target} (run cat %{deps}))))
+  (subdir cstubs2/
+    (rule (target foo3.ml.symbols) (deps (file foo3.ml))
+      (action
+        (with-stdout-to %{target}
+          (run %{bin:lintcstubs_primitives_of_ml} %{deps})))))
+  (subdir cstubs2/
+    (rule (target mystubs2__Foo3.cmt.model.c)
+      (deps (file .mystubs2.objs/byte/mystubs2__Foo3.cmt))
+      (action
+        (with-stdout-to %{target}
+          (progn (run %{bin:lintcstubs_genwrap} %{deps})
+            (run %{bin:lintcstubs_genmain} %{deps}))))))
+  (subdir cstubs2/
+    (rule (target mystubs2__Foo3.ml.h)
+      (deps (file .mystubs2.objs/byte/mystubs2__Foo3.cmt))
+      (action
+        (with-stdout-to %{target} (run %{bin:lintcstubs_arity_cmt} %{deps})))))
+  (subdir other/
+    (rule (target dune__exe__Foo2.cmt.model.c)
+      (deps (file .main.eobjs/byte/dune__exe__Foo2.cmt))
+      (action
+        (with-stdout-to %{target}
+          (progn (run %{bin:lintcstubs_genwrap} %{deps})
+            (run %{bin:lintcstubs_genmain} %{deps}))))))
+  (subdir other/
+    (rule (target dune__exe__Foo2.ml.h)
+      (deps (file .main.eobjs/byte/dune__exe__Foo2.cmt))
+      (action
+        (with-stdout-to %{target} (run %{bin:lintcstubs_arity_cmt} %{deps})))))
+  (subdir other/
+    (rule (target foo2.ml.symbols) (deps (file foo2.ml))
+      (action
+        (with-stdout-to %{target}
+          (run %{bin:lintcstubs_primitives_of_ml} %{deps})))))
+  (subdir other/
+    (rule (target main.ml.symbols) (deps (file main.ml))
+      (action
+        (with-stdout-to %{target}
+          (run %{bin:lintcstubs_primitives_of_ml} %{deps})))))
   $ echo "(include lintcstubs.sexp)" >dune
   $ cp lintcstubs.sexp lintcstubs0.sexp
   $ (cd .. && dune build src/lintcstubs.sexp)
-  $ diff -U 1 lintcstubs0.sexp lintcstubs.sexp
+  $ diff -U 1 lintcstubs0.sexp lintcstubs.sexp | tail -n+3
+  @@ -17,4 +17,3 @@
+       (file other/dune__exe__Foo2.ml.h) (file other/foo2.ml)
+  -    (file other/foo2.ml.symbols) (file other/main.ml)
+  -    (file other/main.ml.symbols))
+  +    (file other/foo2.ml.symbols))
+     (action
+  @@ -58,7 +57,2 @@
+       (action
+  -      (with-stdout-to %{target}
+  -        (run %{bin:lintcstubs_primitives_of_ml} %{deps})))))
+  -(subdir other/
+  -  (rule (target main.ml.symbols) (deps (file main.ml))
+  -    (action
+         (with-stdout-to %{target}
   $ cd ..
   $ dune runtest --root=..
+  Entering directory '..'
+  Leaving directory '..'

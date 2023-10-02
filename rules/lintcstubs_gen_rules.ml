@@ -1,5 +1,7 @@
 open Sexplib
 
+(* TODO: split by subdir or library/exe and parallelize that way? *)
+
 type mode = Initial | Foreach of Fpath.Set.t
 
 let root = ref None
@@ -42,6 +44,7 @@ let project_root =
 
 (** [project_path rule_path] returns [rule_path] relative to the current directory. *)
 let project_path path = Fpath.(project_root // v path |> normalize)
+let project_path' path = Fpath.(project_root // path |> normalize)
 
 let build_path path = Fpath.(project_root / "_build" // v path |> normalize)
 
@@ -49,21 +52,135 @@ let cwd_from_root =
   let root_abs = Fpath.(cwd // project_root) in
   Fpath.relativize ~root:root_abs cwd |> Option.get |> Fpath.normalize
 
+(* TODO: parse these with of_sexp *)
 module File = struct
   type t = Fpath.t
+
+  type fpath = Fpath.t
+
+  let fpath_of_sexp s = s |> Conv.string_of_sexp |> Fpath.v
+
+  type file = In_source_tree of fpath | In_build_dir of fpath | External of fpath [@@deriving_inline of_sexp]
+
+  let _ = fun (_ : file) -> ()
+
+  
+let file_of_sexp =
+  (let error_source__003_ = "rules/lintcstubs_gen_rules.ml.File.file" in
+   function
+   | Sexplib0.Sexp.List ((Sexplib0.Sexp.Atom
+       ("in_source_tree" | "In_source_tree" as _tag__006_))::sexp_args__007_)
+       as _sexp__005_ ->
+       (match sexp_args__007_ with
+        | arg0__008_::[] ->
+            let res0__009_ = fpath_of_sexp arg0__008_ in
+            In_source_tree res0__009_
+        | _ ->
+            Sexplib0.Sexp_conv_error.stag_incorrect_n_args error_source__003_
+              _tag__006_ _sexp__005_)
+   | Sexplib0.Sexp.List ((Sexplib0.Sexp.Atom
+       ("in_build_dir" | "In_build_dir" as _tag__011_))::sexp_args__012_) as
+       _sexp__010_ ->
+       (match sexp_args__012_ with
+        | arg0__013_::[] ->
+            let res0__014_ = fpath_of_sexp arg0__013_ in
+            In_build_dir res0__014_
+        | _ ->
+            Sexplib0.Sexp_conv_error.stag_incorrect_n_args error_source__003_
+              _tag__011_ _sexp__010_)
+   | Sexplib0.Sexp.List ((Sexplib0.Sexp.Atom
+       ("external" | "External" as _tag__016_))::sexp_args__017_) as
+       _sexp__015_ ->
+       (match sexp_args__017_ with
+        | arg0__018_::[] ->
+            let res0__019_ = fpath_of_sexp arg0__018_ in External res0__019_
+        | _ ->
+            Sexplib0.Sexp_conv_error.stag_incorrect_n_args error_source__003_
+              _tag__016_ _sexp__015_)
+   | Sexplib0.Sexp.Atom ("in_source_tree" | "In_source_tree") as sexp__004_
+       ->
+       Sexplib0.Sexp_conv_error.stag_takes_args error_source__003_ sexp__004_
+   | Sexplib0.Sexp.Atom ("in_build_dir" | "In_build_dir") as sexp__004_ ->
+       Sexplib0.Sexp_conv_error.stag_takes_args error_source__003_ sexp__004_
+   | Sexplib0.Sexp.Atom ("external" | "External") as sexp__004_ ->
+       Sexplib0.Sexp_conv_error.stag_takes_args error_source__003_ sexp__004_
+   | Sexplib0.Sexp.List ((Sexplib0.Sexp.List _)::_) as sexp__002_ ->
+       Sexplib0.Sexp_conv_error.nested_list_invalid_sum error_source__003_
+         sexp__002_
+   | Sexplib0.Sexp.List [] as sexp__002_ ->
+       Sexplib0.Sexp_conv_error.empty_list_invalid_sum error_source__003_
+         sexp__002_
+   | sexp__002_ ->
+       Sexplib0.Sexp_conv_error.unexpected_stag error_source__003_ sexp__002_ :
+  Sexplib0.Sexp.t -> file)
+  let _ = file_of_sexp
+
+  [@@@end]
+
+  type parse = [`File of file | `glob of Sexp.t] [@@deriving_inline of_sexp]
+
+  let _ = fun (_ : parse) -> ()
+
+  
+let __parse_of_sexp__ =
+  (let error_source__028_ = "rules/lintcstubs_gen_rules.ml.File.parse" in
+   function
+   | Sexplib0.Sexp.Atom atom__021_ as _sexp__023_ ->
+       (match atom__021_ with
+        | "File" ->
+            Sexplib0.Sexp_conv_error.ptag_takes_args error_source__028_
+              _sexp__023_
+        | "glob" ->
+            Sexplib0.Sexp_conv_error.ptag_takes_args error_source__028_
+              _sexp__023_
+        | _ -> Sexplib0.Sexp_conv_error.no_variant_match ())
+   | Sexplib0.Sexp.List ((Sexplib0.Sexp.Atom atom__021_)::sexp_args__024_) as
+       _sexp__023_ ->
+       (match atom__021_ with
+        | "File" as _tag__029_ ->
+            (match sexp_args__024_ with
+             | arg0__030_::[] ->
+                 let res0__031_ = file_of_sexp arg0__030_ in `File res0__031_
+             | _ ->
+                 Sexplib0.Sexp_conv_error.ptag_incorrect_n_args
+                   error_source__028_ _tag__029_ _sexp__023_)
+        | "glob" as _tag__025_ ->
+            (match sexp_args__024_ with
+             | arg0__026_::[] ->
+                 let res0__027_ = Sexp.t_of_sexp arg0__026_ in
+                 `glob res0__027_
+             | _ ->
+                 Sexplib0.Sexp_conv_error.ptag_incorrect_n_args
+                   error_source__028_ _tag__025_ _sexp__023_)
+        | _ -> Sexplib0.Sexp_conv_error.no_variant_match ())
+   | Sexplib0.Sexp.List ((Sexplib0.Sexp.List _)::_) as sexp__022_ ->
+       Sexplib0.Sexp_conv_error.nested_list_invalid_poly_var
+         error_source__028_ sexp__022_
+   | Sexplib0.Sexp.List [] as sexp__022_ ->
+       Sexplib0.Sexp_conv_error.empty_list_invalid_poly_var
+         error_source__028_ sexp__022_ : Sexplib0.Sexp.t -> parse)
+  
+let _ = __parse_of_sexp__
+  
+let parse_of_sexp =
+  (let error_source__033_ = "rules/lintcstubs_gen_rules.ml.File.parse" in
+   fun sexp__032_ ->
+     try __parse_of_sexp__ sexp__032_
+     with
+     | Sexplib0.Sexp_conv_error.No_variant_match ->
+         Sexplib0.Sexp_conv_error.no_matching_variant_found
+           error_source__033_ sexp__032_ : Sexplib0.Sexp.t -> parse)
+let _ = parse_of_sexp
+[@@@end]
 
   (** [of_sexp sexp] parses a file dependency.
 
      [(File (In_source_tree example/dune/foostubs.c))]
    *)
-  let of_sexp =
-    let open Sexp in
-    function
-    | List [Atom "File"; List [Atom _; Atom path]] ->
-        Some (project_path path)
-    | file ->
-        if !debug then Format.eprintf "Could not parse: %a@." Sexp.pp_hum file ;
-        None
+  let of_sexp s =
+      match parse_of_sexp s with
+      | `File (In_source_tree f | In_build_dir f | External f) -> Some (project_path' f)
+      | `glob _ -> None
 end
 
 module Target = struct
