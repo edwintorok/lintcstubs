@@ -12,9 +12,11 @@ type target
 
 type dep
 
+type glob
+
 val empty : t
 
-val dep_glob_ext : ?recurse:bool -> string -> dep
+val dep_glob_ext : ?recurse:bool -> glob -> dep
 
 val dep_file : Fpath.t -> dep
 

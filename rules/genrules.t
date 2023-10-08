@@ -94,11 +94,14 @@ Now generate rules:
   Entering directory '..'
   Leaving directory '..'
   $ cat lintcstubs.sexp
+  (rule (target lintcstubs.primitives.h)
+    (deps (file cstubs2/mystubs2__Foo3.ml.h) (file other/dune__exe__Foo2.ml.h))
+    (action (with-stdout-to %{target} (run cat %{deps}))))
   (rule (target lintcstubs.sarif)
     (deps (file cstubs2/mystubs2__Foo3.cmt.model.c)
-      (file cstubs2/mystubs2__Foo3.ml.h)
+      (file cstubs2/mystubs2__Foo3.ml.h) (file lintcstubs.primitives.h)
       (file other/dune__exe__Foo2.cmt.model.c)
-      (file other/dune__exe__Foo2.ml.h) (file primitives.h))
+      (file other/dune__exe__Foo2.ml.h))
     (action
       (run %{bin:lintcstubs} -o %{target} -I . -I %{ocaml_where} --conf
         lintcstubs.json %{deps}))
@@ -117,9 +120,6 @@ Now generate rules:
       (with-stdout-to %{target}
         (run %{bin:lintcstubs_gen_rules} --update %{deps})))
     (mode promote))
-  (rule (target primitives.h)
-    (deps (file cstubs2/mystubs2__Foo3.ml.h) (file other/dune__exe__Foo2.ml.h))
-    (action (with-stdout-to %{target} (run cat %{deps}))))
   (subdir cstubs2/
     (rule (target foo3.ml.symbols) (deps (file foo3.ml))
       (action
@@ -163,21 +163,61 @@ Now generate rules:
   $ cp lintcstubs.sexp lintcstubs0.sexp
   $ (cd .. && dune build src/lintcstubs.sexp)
   $ diff -U 1 lintcstubs0.sexp lintcstubs.sexp | tail -n+3
-  @@ -17,4 +17,3 @@
+  @@ -1,13 +1 @@
+  -(rule (target lintcstubs.primitives.h)
+  -  (deps (file cstubs2/mystubs2__Foo3.ml.h) (file other/dune__exe__Foo2.ml.h))
+  -  (action (with-stdout-to %{target} (run cat %{deps}))))
+  -(rule (target lintcstubs.sarif)
+  -  (deps (file cstubs2/mystubs2__Foo3.cmt.model.c)
+  -    (file cstubs2/mystubs2__Foo3.ml.h) (file lintcstubs.primitives.h)
+  -    (file other/dune__exe__Foo2.cmt.model.c)
+  -    (file other/dune__exe__Foo2.ml.h))
+  -  (action
+  -    (run %{bin:lintcstubs} -o %{target} -I . -I %{ocaml_where} --conf
+  -      lintcstubs.json %{deps}))
+  -  (alias runtest))
+   (rule (target lintcstubs.sexp)
+  @@ -20,4 +8,3 @@
        (file other/dune__exe__Foo2.ml.h) (file other/foo2.ml)
   -    (file other/foo2.ml.symbols) (file other/main.ml)
   -    (file other/main.ml.symbols))
   +    (file other/foo2.ml.symbols))
      (action
-  @@ -58,7 +57,2 @@
-       (action
-  -      (with-stdout-to %{target}
-  -        (run %{bin:lintcstubs_primitives_of_ml} %{deps})))))
-  -(subdir other/
+  @@ -32,2 +19,13 @@
+   (subdir cstubs2/
+  +  (rule (target foo3.primitives.h) (deps (file mystubs2__Foo3.ml.h))
+  +    (action (with-stdout-to %{target} (run cat %{deps})))))
+  +(subdir cstubs2/
+  +  (rule (target foo3.sarif)
+  +    (deps (file foo3.primitives.h) (file mystubs2__Foo3.cmt.model.c)
+  +      (file mystubs2__Foo3.ml.h))
+  +    (action
+  +      (run %{bin:lintcstubs} -o %{target} -I . -I %{ocaml_where} --conf
+  +        lintcstubs.json %{deps}))
+  +    (alias runtest)))
+  +(subdir cstubs2/
+     (rule (target mystubs2__Foo3.cmt.model.c)
+  @@ -61,5 +59,11 @@
+   (subdir other/
   -  (rule (target main.ml.symbols) (deps (file main.ml))
   -    (action
-         (with-stdout-to %{target}
+  -      (with-stdout-to %{target}
+  -        (run %{bin:lintcstubs_primitives_of_ml} %{deps})))))
+  +  (rule (target foo2.primitives.h) (deps (file dune__exe__Foo2.ml.h))
+  +    (action (with-stdout-to %{target} (run cat %{deps})))))
+  +(subdir other/
+  +  (rule (target foo2.sarif)
+  +    (deps (file dune__exe__Foo2.cmt.model.c) (file dune__exe__Foo2.ml.h)
+  +      (file foo2.primitives.h))
+  +    (action
+  +      (run %{bin:lintcstubs} -o %{target} -I . -I %{ocaml_where} --conf
+  +        lintcstubs.json %{deps}))
+  +    (alias runtest)))
   $ cd ..
-  $ dune runtest --root=..
+  $ dune runtest --cache=disabled --root=..
   Entering directory '..'
+  [Warning][Assert] Assertion "(res & 1L) != 0L" is unknown. Expected: SUCCESS -> failed (mystubs2__Foo3.cmt.model.c:64:4-64:40)
+  [Warning][Assert] Assertion "(res & 1L) != 0L" is unknown. Expected: SUCCESS -> failed (mystubs2__Foo3.cmt.model.c:83:4-83:40)
+  [Warning][Assert] Assertion "(res & 1L) != 0L" is unknown. Expected: SUCCESS -> failed (dune__exe__Foo2.cmt.model.c:64:4-64:40)
+  Hello
   Leaving directory '..'

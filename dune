@@ -24,6 +24,10 @@
 
 (rule
  (alias foo)
- (deps (glob_files_rec *.o) (glob_files_rec *.ml) (sandbox always) (source_tree .))
- (action (run dune describe))
-)
+ (deps
+  (glob_files_rec *.o)
+  (glob_files_rec *.ml)
+  (sandbox always)
+  (source_tree .))
+ (action
+  (run dune describe)))

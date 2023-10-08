@@ -8,8 +8,6 @@
 open Sexplib0
 open Sexp_conv
 
-let is_atom = function Sexp.Atom _ -> true | Sexp.List _ -> false
-
 (* records result in extra parenthesis, this function adjusts them *)
 let rec fixup_sexp =
   let open Sexp in
@@ -136,7 +134,7 @@ end = struct
     match Fpath.Map.choose_opt targets with
     | None ->
         invalid_arg "attempting to split empty targets"
-    | Some (base, p) ->
+    | Some (base, _p) ->
         if Fpath.Map.cardinal targets = 1 then
           (base, targets |> Fpath.Map.to_seq |> Seq.map snd |> List.of_seq)
         else
