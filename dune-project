@@ -30,7 +30,7 @@
  (depends
   (ocaml (>= 4.13))
   (lintcstubs-gen (= :version))
-  (goblint (>= 2.1.0))
+  (goblint (and (>= 2.1.0) (< 2.2)))
   goblint-cil
   dune-compiledb
   fpath
