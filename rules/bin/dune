@@ -1,0 +1,5 @@
+(executable
+	(public_name lintcstubs_primitives_of_ml)
+	(libraries compiler-libs.common)
+	(package lintcstubs-gen)
+)

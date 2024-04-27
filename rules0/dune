@@ -1,10 +1,4 @@
 (executable
- (public_name lintcstubs_primitives_of_ml)
- (modules lintcstubs_primitives_of_ml)
- (package lintcstubs)
- (libraries compiler-libs.common))
-
-(executable
  (public_name lintcstubs_gen_rules)
  (modules lintcstubs_gen_rules dune_stanzas dune_rules)
  (package lintcstubs)

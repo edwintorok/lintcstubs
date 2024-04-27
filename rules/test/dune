@@ -3,8 +3,11 @@
 	(libraries dune_rules)
 )
 
-(subdir example (copy_files# (files ../../../example/dune2/*)))
+(subdir example
+	(copy_files# ../../../example/dune2/*.{ml,c})
+	(copy_files ../../../example/dune2/dune)
+)
 
 (cram
- (deps parse_test.exe (source_tree example))
+ (deps %{bin:lintcstubs_primitives_of_ml} parse_test.exe (glob_files_rec example/*))
  (package lintcstubs))
