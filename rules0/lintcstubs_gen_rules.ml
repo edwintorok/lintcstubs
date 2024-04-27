@@ -50,7 +50,7 @@ let cwd_from_root =
 open Dune_rules
 
 let parse_rules_from_stdin () =
-  stdin |> Sexp.input_rev_sexps |> List.filter_map Rule.of_sexp
+  stdin |> Sexp.input_rev_sexps |> List.map Rule.t_of_sexp
 
 let foreach set f =
   set

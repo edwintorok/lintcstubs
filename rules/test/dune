@@ -1,0 +1,8 @@
+(executable
+	(name parse_test)
+	(libraries dune_rules)
+)
+
+(cram
+ (deps parse_test.exe)
+ (package lintcstubs))
