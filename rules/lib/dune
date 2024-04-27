@@ -1,5 +1,5 @@
 (library
-	(name dune_rules)
-	(libraries sexplib sexplib0 fpath)
-	(lint (pps ppx_sexp_conv))
-)
+ (name dune_rules)
+ (libraries sexplib sexplib0 fpath)
+ (lint
+  (pps ppx_sexp_conv)))

@@ -1,13 +1,16 @@
 (executable
-	(name parse_test)
-	(libraries dune_rules)
-)
+ (name parse_test)
+ (libraries dune_rules))
 
-(subdir example
-	(copy_files# ../../../example/dune2/*.{ml,c})
-	(copy_files ../../../example/dune2/dune)
-)
+(subdir
+ example
+ (copy_files# ../../../example/dune2/*.{ml,c})
+ (copy_files ../../../example/dune2/dune))
 
 (cram
- (deps %{bin:lintcstubs_primitives_of_ml} %{bin:lintcstubs_genrules} parse_test.exe (glob_files_rec example/*))
+ (deps
+  %{bin:lintcstubs_primitives_of_ml}
+  %{bin:lintcstubs_genrules}
+  parse_test.exe
+  (glob_files_rec example/*))
  (package lintcstubs))

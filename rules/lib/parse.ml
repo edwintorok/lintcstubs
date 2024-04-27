@@ -375,10 +375,10 @@ end
 module Rule = struct
   (* parses a dune rule.
 
-    [((deps (...)) (targets (...)) (action (...)))]
-    [((deps (...)) (targets (...)) (context ...) (action (...)))]
+     [((deps (...)) (targets (...)) (action (...)))]
+     [((deps (...)) (targets (...)) (context ...) (action (...)))]
 
-    See also [dune rules --help]
+     See also [dune rules --help]
   *)
 
   (** [dune rules] output as an OCaml type *)

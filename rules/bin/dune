@@ -1,12 +1,10 @@
 (executable
-	(public_name lintcstubs_primitives_of_ml)
-	(modules lintcstubs_primitives_of_ml)
-	(libraries compiler-libs.common)
-	(package lintcstubs-gen)
-)
+ (public_name lintcstubs_primitives_of_ml)
+ (modules lintcstubs_primitives_of_ml)
+ (libraries compiler-libs.common)
+ (package lintcstubs-gen))
 
 (executable
-	(public_name lintcstubs_genrules)
-	(modules lintcstubs_genrules)
-	(package lintcstubs-gen)
-)
+ (public_name lintcstubs_genrules)
+ (modules lintcstubs_genrules)
+ (package lintcstubs-gen))
