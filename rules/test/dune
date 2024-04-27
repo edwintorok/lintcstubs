@@ -3,6 +3,8 @@
 	(libraries dune_rules)
 )
 
+(subdir example (copy_files# (files ../../../example/dune2/*)))
+
 (cram
- (deps parse_test.exe)
+ (deps parse_test.exe (source_tree example))
  (package lintcstubs))

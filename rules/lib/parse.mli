@@ -10,19 +10,22 @@
   Another alternative would be to parse [dune describe --format=csexp --lang=0.1], but that is incomplete,
   it doesn't include rules for the C stubs.
 
-  We only parse the subset of rules needed by [lintcstubs].
+  We only parse the subset of rules needed by [lintcstubs] for now.
 *)
 
+(** File dependency for a {!module:Rule} *)
 module File : sig
   (** a file dependency, or [None] if we couldn't parse it *)
   type t = Fpath.t option
 end
 
+(** {!module:Rule} target *)
 module Target : sig
   (** build target *)
   type t = [`directories of Fpath.t list | `files of Fpath.t list]
 end
 
+(** {!module:Rule} action *)
 module Action : sig
   (** A {{:https://dune.readthedocs.io/en/stable/reference/actions/index.html#actions}dune user action}.
 
@@ -35,12 +38,18 @@ module Action : sig
 end
 
 module Rule : sig
+  (** [dune rules] output as an OCaml type *)
   type t = {
-      deps: File.t list
-    ; targets: Target.t list
-    ; action: Action.t
-    ; context: string option
+      deps: File.t list  (** dependencies of this rule *)
+    ; targets: Target.t list  (** targets created by this rule *)
+    ; action: Action.t  (** action executed by the rule *)
+    ; context: string option  (** build context, if any *)
   }
 
   val t_of_sexp : Sexplib0.Sexp.t -> t
+  (** [t_of_sexp sexp] parses a dune rule from [dune rules].
+
+    Example usage:
+    [stdin |> Sexp.input_rev_sexps |> List.rev_map Dune_rules.Parse.Rule.t_of_sexp]
+   *)
 end

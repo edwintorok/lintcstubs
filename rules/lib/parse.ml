@@ -8,6 +8,10 @@ let fpath_of_sexp s = s |> Sexplib.Conv.string_of_sexp |> Fpath.v
 module File = struct
   type t = Fpath.t option
 
+  (* the code between [@@deriving_inline] and [@@end] is updated with:
+     {v dune build @lint --auto-promote v}
+  *)
+
   type file =
     | In_source_tree of fpath
     | In_build_dir of fpath
@@ -255,87 +259,95 @@ module Action = struct
 
   let _ = fun (_ : parse) -> ()
 
-  
-let __parse_of_sexp__ =
-  (let error_source__066_ = "rules/lib/parse.ml.Action.parse" in
-   function
-   | Sexplib0.Sexp.Atom atom__052_ as _sexp__054_ ->
-       (match atom__052_ with
+  let __parse_of_sexp__ =
+    ( let error_source__066_ = "rules/lib/parse.ml.Action.parse" in
+      function
+      | Sexplib0.Sexp.Atom atom__052_ as _sexp__054_ -> (
+        match atom__052_ with
         | "chdir" ->
             Sexplib0.Sexp_conv_error.ptag_takes_args error_source__066_
               _sexp__054_
         | "copy" ->
             Sexplib0.Sexp_conv_error.ptag_takes_args error_source__066_
               _sexp__054_
-        | _ -> Sexplib0.Sexp_conv_error.no_variant_match ())
-   | Sexplib0.Sexp.List ((Sexplib0.Sexp.Atom atom__052_)::sexp_args__055_) as
-       _sexp__054_ ->
-       (match atom__052_ with
-        | "chdir" as _tag__057_ ->
-            (match sexp_args__055_ with
-             | arg0__073_::[] ->
-                 let res0__074_ =
-                   match arg0__073_ with
-                   | Sexplib0.Sexp.List (arg0__068_::arg1__069_::[]) ->
-                       let res0__070_ = fpath_of_sexp arg0__068_
-                       and res1__071_ =
-                         let sexp__067_ = arg1__069_ in
-                         try
-                           match sexp__067_ with
-                           | Sexplib0.Sexp.Atom atom__059_ as _sexp__061_ ->
-                               (match atom__059_ with
-                                | "run" ->
-                                    Sexplib0.Sexp_conv_error.ptag_takes_args
-                                      error_source__066_ _sexp__061_
-                                | _ ->
-                                    Sexplib0.Sexp_conv_error.no_variant_match
-                                      ())
-                           | Sexplib0.Sexp.List ((Sexplib0.Sexp.Atom
-                               atom__059_)::sexp_args__062_) as _sexp__061_
-                               ->
-                               (match atom__059_ with
-                                | "run" as _tag__063_ ->
-                                    (match sexp_args__062_ with
-                                     | arg0__064_::[] ->
-                                         let res0__065_ =
-                                           list_of_sexp string_of_sexp
-                                             arg0__064_ in
-                                         `run res0__065_
-                                     | _ ->
-                                         Sexplib0.Sexp_conv_error.ptag_incorrect_n_args
-                                           error_source__066_ _tag__063_
-                                           _sexp__061_)
-                                | _ ->
-                                    Sexplib0.Sexp_conv_error.no_variant_match
-                                      ())
-                           | Sexplib0.Sexp.List ((Sexplib0.Sexp.List _)::_)
-                               as sexp__060_ ->
-                               Sexplib0.Sexp_conv_error.nested_list_invalid_poly_var
-                                 error_source__066_ sexp__060_
-                           | Sexplib0.Sexp.List [] as sexp__060_ ->
-                               Sexplib0.Sexp_conv_error.empty_list_invalid_poly_var
-                                 error_source__066_ sexp__060_
-                         with
-                         | Sexplib0.Sexp_conv_error.No_variant_match ->
-                             Sexplib0.Sexp_conv_error.no_matching_variant_found
-                               error_source__066_ sexp__067_ in
-                       (res0__070_, res1__071_)
-                   | sexp__072_ ->
-                       Sexplib0.Sexp_conv_error.tuple_of_size_n_expected
-                         error_source__066_ 2 sexp__072_ in
-                 `chdir res0__074_
-             | _ ->
-                 Sexplib0.Sexp_conv_error.ptag_incorrect_n_args
-                   error_source__066_ _tag__057_ _sexp__054_)
+        | _ ->
+            Sexplib0.Sexp_conv_error.no_variant_match ()
+      )
+      | Sexplib0.Sexp.List (Sexplib0.Sexp.Atom atom__052_ :: sexp_args__055_) as
+        _sexp__054_ -> (
+        match atom__052_ with
+        | "chdir" as _tag__057_ -> (
+          match sexp_args__055_ with
+          | arg0__073_ :: [] ->
+              let res0__074_ =
+                match arg0__073_ with
+                | Sexplib0.Sexp.List [arg0__068_; arg1__069_] ->
+                    let res0__070_ = fpath_of_sexp arg0__068_
+                    and res1__071_ =
+                      let sexp__067_ = arg1__069_ in
+                      try
+                        match sexp__067_ with
+                        | Sexplib0.Sexp.Atom atom__059_ as _sexp__061_ -> (
+                          match atom__059_ with
+                          | "run" ->
+                              Sexplib0.Sexp_conv_error.ptag_takes_args
+                                error_source__066_ _sexp__061_
+                          | _ ->
+                              Sexplib0.Sexp_conv_error.no_variant_match ()
+                        )
+                        | Sexplib0.Sexp.List
+                            (Sexplib0.Sexp.Atom atom__059_ :: sexp_args__062_)
+                          as _sexp__061_ -> (
+                          match atom__059_ with
+                          | "run" as _tag__063_ -> (
+                            match sexp_args__062_ with
+                            | arg0__064_ :: [] ->
+                                let res0__065_ =
+                                  list_of_sexp string_of_sexp arg0__064_
+                                in
+                                `run res0__065_
+                            | _ ->
+                                Sexplib0.Sexp_conv_error.ptag_incorrect_n_args
+                                  error_source__066_ _tag__063_ _sexp__061_
+                          )
+                          | _ ->
+                              Sexplib0.Sexp_conv_error.no_variant_match ()
+                        )
+                        | Sexplib0.Sexp.List (Sexplib0.Sexp.List _ :: _) as
+                          sexp__060_ ->
+                            Sexplib0.Sexp_conv_error
+                            .nested_list_invalid_poly_var error_source__066_
+                              sexp__060_
+                        | Sexplib0.Sexp.List [] as sexp__060_ ->
+                            Sexplib0.Sexp_conv_error.empty_list_invalid_poly_var
+                              error_source__066_ sexp__060_
+                      with Sexplib0.Sexp_conv_error.No_variant_match ->
+                        Sexplib0.Sexp_conv_error.no_matching_variant_found
+                          error_source__066_ sexp__067_
+                    in
+                    (res0__070_, res1__071_)
+                | sexp__072_ ->
+                    Sexplib0.Sexp_conv_error.tuple_of_size_n_expected
+                      error_source__066_ 2 sexp__072_
+              in
+              `chdir res0__074_
+          | _ ->
+              Sexplib0.Sexp_conv_error.ptag_incorrect_n_args error_source__066_
+                _tag__057_ _sexp__054_
+        )
         | "copy" as _tag__056_ ->
             `copy (Sexplib0.Sexp_conv.list_map fpath_of_sexp sexp_args__055_)
-        | _ -> Sexplib0.Sexp_conv_error.no_variant_match ())
-   | Sexplib0.Sexp.List ((Sexplib0.Sexp.List _)::_) as sexp__053_ ->
-       Sexplib0.Sexp_conv_error.nested_list_invalid_poly_var
-         error_source__066_ sexp__053_
-   | Sexplib0.Sexp.List [] as sexp__053_ ->
-       Sexplib0.Sexp_conv_error.empty_list_invalid_poly_var
-         error_source__066_ sexp__053_ : Sexplib0.Sexp.t -> parse)
+        | _ ->
+            Sexplib0.Sexp_conv_error.no_variant_match ()
+      )
+      | Sexplib0.Sexp.List (Sexplib0.Sexp.List _ :: _) as sexp__053_ ->
+          Sexplib0.Sexp_conv_error.nested_list_invalid_poly_var
+            error_source__066_ sexp__053_
+      | Sexplib0.Sexp.List [] as sexp__053_ ->
+          Sexplib0.Sexp_conv_error.empty_list_invalid_poly_var
+            error_source__066_ sexp__053_
+      : Sexplib0.Sexp.t -> parse
+      )
 
   let _ = __parse_of_sexp__
 
@@ -361,13 +373,15 @@ let __parse_of_sexp__ =
 end
 
 module Rule = struct
-  (** parses a dune rule.
+  (* parses a dune rule.
 
     [((deps (...)) (targets (...)) (action (...)))]
     [((deps (...)) (targets (...)) (context ...) (action (...)))]
 
     See also [dune rules --help]
   *)
+
+  (** [dune rules] output as an OCaml type *)
   type t = {
       deps: File.t list
     ; targets: Target.t list
