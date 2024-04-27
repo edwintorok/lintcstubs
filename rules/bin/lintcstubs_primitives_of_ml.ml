@@ -39,7 +39,7 @@ let value_description file _ vd =
   | builtin :: _ when builtin = "" || builtin.[0] = '%' ->
       () (* call to builtin primitive, nothing to verify *)
   | symbols ->
-      (* print external symbols in [nm -g -A -P] compatible format *)
+      (* print external symbols in [nm -gAPu] compatible format *)
       symbols |> List.iter (Printf.printf "%s: %s U\n" file)
 
 let () =

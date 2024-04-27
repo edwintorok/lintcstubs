@@ -9,5 +9,5 @@
 )
 
 (cram
- (deps %{bin:lintcstubs_primitives_of_ml} parse_test.exe (glob_files_rec example/*))
+ (deps %{bin:lintcstubs_primitives_of_ml} %{bin:lintcstubs_genrules} parse_test.exe (glob_files_rec example/*))
  (package lintcstubs))
