@@ -7,7 +7,9 @@
 *)
 
 let gen_dune_include () =
-  (* TODO: just dirgen first? smaller thing to commit... *)
+  (* TODO: just dirgen first? smaller thing to commit...
+    but what if you have ml/c files in toplevel dir?
+   *)
   (* cycle with dune.inc :(, perhaps dynamic-include would work? then gen file is not a source file *)
   print_endline
     {|
