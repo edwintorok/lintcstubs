@@ -93,7 +93,7 @@ let drop_dotdot path =
   So have to convert paths to not contain [/], yet still be unique.
  *)
 let symbols_name filename =
-  filename |> String.map (function '/' -> '_' | c -> c)
+  filename |> Digest.string |> Digest.to_hex
 
 let gen_symbols ~cmd dep =
   let target = drop_dotdot dep in
