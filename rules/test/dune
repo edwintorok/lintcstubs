@@ -3,9 +3,9 @@
  (libraries dune_rules))
 
 (subdir
- example
- (copy_files# ../../../example/dune2/*.{ml,c})
- (copy_files ../../../example/dune2/dune))
+ example/dune2
+ (copy_files# ../../../../example/dune2/*.{ml,c})
+ (copy_files ../../../../example/dune2/dune))
 
 (cram
  (deps
