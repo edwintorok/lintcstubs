@@ -12,6 +12,7 @@
 )
 
 (executables
- (public_names lintcstubs_genrules lintcstubs_genrules_symbols)
- (modules lintcstubs_genrules lintcstubs_genrules_symbols)
+ (public_names lintcstubs_genrules)
+ (modules lintcstubs_genrules)
+ (libraries unionFind)
  (package lintcstubs-gen))

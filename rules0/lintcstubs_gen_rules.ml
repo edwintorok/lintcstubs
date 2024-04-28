@@ -1,4 +1,4 @@
-open Sexplib
+pen Sexplib
 
 (* TODO: split by subdir or library/exe and parallelize that way? *)
 

@@ -9,7 +9,9 @@ Setup some build files for testing:
   $ echo '(include dune.inc)' >>dune
 
 Generate symbol files:
+  $ dune clean
   $ dune build @gensymbols
+  $ cat _build/default/lintcstubs_generate/ml_c_files.sexp
 
 Check symbol files. To keep the output portable across systems do not look at symbol value and size:
   $ cd _build/default/lintcstubs_run
@@ -18,3 +20,8 @@ Check symbol files. To keep the output portable across systems do not look at sy
   0694a2e55f7ef1ebaebba36e042431b5.symbols:../example/dune2/foo2.ml: foo_good U
   1cd6b0e9ad031c09963b56a0bcdd6a04.symbols:../example/dune2/foostubs.o: foo_bad T
   1cd6b0e9ad031c09963b56a0bcdd6a04.symbols:../example/dune2/foostubs.o: foo_good T
+
+Debug:
+  $ cd ../../../
+  $ cat _build/default/lintcstubs_generate/dune.1.inc
+  $ cat _build/default/lintcstubs_generate2/dune.2.inc
