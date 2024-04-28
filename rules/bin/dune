@@ -4,6 +4,13 @@
  (libraries compiler-libs.common)
  (package lintcstubs-gen))
 
+(executables
+ (public_names lintcstubs_gen_find_dirs lintcstubs_gen_find_targets)
+ (modules lintcstubs_gen_find_targets lintcstubs_gen_find_dirs)
+ (libraries dune-action-plugin)
+ (package lintcstubs-gen)
+)
+
 (executable
  (public_name lintcstubs_genrules)
  (modules lintcstubs_genrules)

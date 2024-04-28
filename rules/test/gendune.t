@@ -1,9 +1,11 @@
 Setup base dune file:
   $ cd example
   $ lintcstubs_genrules >dune.inc
+  $ touch dune.inc.gen
 
 Setup some build files for testing:
   $ echo '(lang dune 3.14)' >dune-project
+  $ echo '(using action-plugin 0.1)' >>dune-project
   $ touch lintcstubs.opam
 
 We cannot modify dune directly (it is readonly, because we run as part of the build here)
@@ -12,7 +14,7 @@ We cannot modify dune directly (it is readonly, because we run as part of the bu
   $ mv dune.tmp dune
 
 Build symbol files, the first runtest is needed to update dune.inc:
-  $ dune build @gensymbols
+  $ dune runtest --auto-promote || dune runtest || cat dune.inc.gen
 
 The second run actually generates the symbols:
   $ dune build @gensymbols

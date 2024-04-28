@@ -11,6 +11,7 @@
  (deps
   %{bin:lintcstubs_primitives_of_ml}
   %{bin:lintcstubs_genrules}
+  %{bin:lintcstubs_gen_find_targets}
   parse_test.exe
   (glob_files_rec example/*))
  (package lintcstubs))

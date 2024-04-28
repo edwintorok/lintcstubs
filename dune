@@ -8,6 +8,11 @@
 ; the goblint 'site'
 ; but also this test is part of a package, hence we need to specify it twice
 
+(rule
+ (alias foox)
+ (action (dynamic-run %{bin:lintcstubs_gen_find_targets} c ml))
+)
+
 (install
  (section
   (site

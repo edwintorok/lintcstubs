@@ -7,18 +7,30 @@
 *)
 
 let gen_dune_include () =
+  (* cycle with dune.inc :(, perhaps dynamic-include would work? then gen file is not a source file *)
   print_endline
     {|
+    (include dune.inc.gen)
     (rule
-      (mode promote)
-      (aliases runtest gensymbols)
-      (deps (glob_files_rec *.c) (glob_files_rec *.ml))
+      (deps (source_tree .))
+      (target c_ml_files.sexp)
       (action
-        (with-stdout-to
-          dune.inc
-          (run %{bin:lintcstubs_genrules} --symbols %{deps})
-        )
+          (dynamic-run %{bin:lintcstubs_gen_find_targets} --output %{target} --ext c --ext ml --paths %{deps})
       )
+    )
+
+    (rule
+      (deps (include c_ml_files.sexp))
+      (action
+        (with-stdout-to dune.inc.gen2
+          (run %{bin:lintcstubs_genrules} --symbols %{deps})
+      )
+      )
+    )
+
+    (rule
+      (alias runtest)
+      (action (diff dune.inc.gen dune.inc.gen2))
     )
   |}
 
@@ -65,7 +77,8 @@ let gen_symbols dep =
 let () =
   let usage = Printf.sprintf "%s [OPTIONS...] [dependencies]" Sys.argv.(0) in
   let symbols = ref false in
-  gen_dune_include () ;
   Arg.parse
     [("--symbols", Arg.Set symbols, "generate rules for symbols")]
-    gen_symbols usage
+    gen_symbols usage;
+  if !symbols = false then
+  gen_dune_include ()
