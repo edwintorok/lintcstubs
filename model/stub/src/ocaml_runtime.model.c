@@ -72,10 +72,15 @@ int __VERIFIER_nondet_int(void);
 
 caml_domain_state mainstate;
 
+CAMLexport caml_domain_state* caml_get_domain_state(void)
+{
+  return &mainstate;
+}
+
 #ifndef Caml_state_opt
 /* avoid a lot of NULL deref alerts */
 caml_domain_state *Caml_state = &mainstate;
-#else
+#elif HAS_FULL_THREAD_VARIABLES
 __thread caml_domain_state *Caml_state_opt = &mainstate;
 #endif
 
@@ -650,3 +655,4 @@ STUB void caml_raise_out_of_memory()
     __builtin_unreachable();
     abort();
 }
+

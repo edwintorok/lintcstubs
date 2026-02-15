@@ -11,7 +11,7 @@ Rule 1. CAMLparam
   > }
   > EOF
 
-  $ lintcstubs --set mainfun[+] foo --disable warn.deadcode -I $(ocamlc -where) test.c
+  $ lintcstubs --result none --set mainfun[+] foo --disable warn.deadcode -I $(ocamlc -where) test.c
 
   $ cat >test.c <<EOF
   > #include <caml/memory.h>
@@ -22,7 +22,7 @@ Rule 1. CAMLparam
   >   CAMLreturn0;
   > }
   > EOF
-  $ lintcstubs --set mainfun[+] foo --disable warn.info --disable warn.deadcode -I $(ocamlc -where) test.c
+  $ lintcstubs --result none --set mainfun[+] foo --disable warn.info --disable warn.deadcode -I $(ocamlc -where) test.c
 
   $ cat >test.c <<EOF
   > #include <caml/memory.h>
@@ -30,7 +30,7 @@ Rule 1. CAMLparam
   > {
   > }
   > EOF
-  $ lintcstubs --set mainfun[+] foo --disable warn.info --disable warn.deadcode -I $(ocamlc -where) test.c
+  $ lintcstubs --result none --set mainfun[+] foo --disable warn.info --disable warn.deadcode -I $(ocamlc -where) test.c
 
   $ cat >test.c <<EOF
   > #include <caml/memory.h>
@@ -42,7 +42,7 @@ Rule 1. CAMLparam
   >   CAMLreturn(result);
   > }
   > EOF
-  $ lintcstubs --conf lintcstubs.json --set mainfun[+] foo -I $(ocamlc -where) test.c  | sed -e '/unroll.*/d'
+  $ lintcstubs --result none --conf lintcstubs.json --set mainfun[+] foo -I $(ocamlc -where) test.c  | sed -e '/unroll.*/d'
   [Error][Imprecise][Unsound] Function definition missing
 
 Cannot dereference OCaml values after releasing the runtime lock:
@@ -61,8 +61,8 @@ Cannot dereference OCaml values after releasing the runtime lock:
   > }
   > EOF
 
-  $ lintcstubs --set mainfun[+] foo --set warn.race-threshold 1000 --disable warn.imprecise --disable warn.unsound --disable warn.behavior --disable warn.info --enable dbg.regression --disable warn.deadcode -I $(ocamlc -where) test.c 2>&1 | sed -e 's^/[^ ]*/^^g'
-  [Warning][Unknown] unlocking mutex (__VERIFIER_ocaml_runtime_lock) which may not be held (ocaml_runtime.model.c:579:5-579:62)
+  $ lintcstubs --result none --set mainfun[+] foo --set warn.race-threshold 1000 --disable warn.imprecise --disable warn.unsound --disable warn.behavior --disable warn.info --enable dbg.regression --disable warn.deadcode -I $(ocamlc -where) test.c 2>&1 | sed -e 's^/[^ ]*/^^g'
+  [Warning][Unknown] unlocking mutex (__VERIFIER_ocaml_runtime_lock) which may not be held (ocaml_runtime.model.c:584:5-584:62)
   [Error][Race] DomainLock: must be held when dereferencing OCaml value v (test.c:9:3-9:39)
   [Error][Imprecise][Unsound] Function definition missing
 
@@ -81,7 +81,7 @@ Correct would be:
   > }
   > EOF
 
-  $ lintcstubs --set mainfun[+] foo --disable warn.imprecise --disable warn.unsound --enable dbg.regression --disable warn.info --disable warn.behavior --disable warn.deadcode -I $(ocamlc -where) test.c | sed -e 's^/[^ ]*/^^g'
-  [Warning][Unknown] unlocking mutex (__VERIFIER_ocaml_runtime_lock) which may not be held (ocaml_runtime.model.c:579:5-579:62)
+  $ lintcstubs --result none --set mainfun[+] foo --disable warn.imprecise --disable warn.unsound --enable dbg.regression --disable warn.info --disable warn.behavior --disable warn.deadcode -I $(ocamlc -where) test.c | sed -e 's^/[^ ]*/^^g'
+  [Warning][Unknown] unlocking mutex (__VERIFIER_ocaml_runtime_lock) which may not be held (ocaml_runtime.model.c:584:5-584:62)
   [Error][Imprecise][Unsound] Function definition missing
 

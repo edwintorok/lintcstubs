@@ -66,9 +66,6 @@ let set_default_flags () =
   (* too many messages about successful assertions otherwise *)
   set_auto "dbg.regression" "true" ;
 
-  (* HTML output *)
-  set_string "result" "xslt" ;
-
   (* OCaml runtime model - needed so we know what locks/unlocks the runtime
      lock
   *)
@@ -122,6 +119,9 @@ let report_results () =
 let main () =
   Cilfacade.init () ;
   (* for now we use goblint's CLI *)
+  (* HTML output *)
+  GobConfig.set_string "result" "xslt" ;
+
   Maingoblint.parse_arguments () ;
   set_default_flags () ;
   Maingoblint.handle_extraspecials () ;
