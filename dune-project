@@ -19,7 +19,7 @@
  (description "Generates a C model for how OCaml C primitives can be called. Link with a C model of the OCaml runtime, or run a static analyzer to find incorrect API/macro usage that leads to race conditions.")
  (depends
   (ocaml (>= 4.13))
-  (lintcstubs-arity (>= 0.2.2))
+  (lintcstubs-arity (>= 0.5.1))
  )
 )
 

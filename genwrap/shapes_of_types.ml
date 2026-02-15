@@ -144,7 +144,7 @@ module Shape = struct
   let rec of_type_expr e =
     match Get_desc.get_desc e with
     | Ttuple lst ->
-        tuple (List.map of_type_expr lst)
+        tuple (lst |> Tuple.types_of_ttuple |> List.map of_type_expr)
     | Tobject _ ->
         obj
     | Tarrow (_, e1, e2, _) ->

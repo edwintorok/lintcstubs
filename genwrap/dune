@@ -18,8 +18,20 @@
 (library
  (package lintcstubs-gen)
  (name shapes_of_types)
- (modules shapes_of_types get_desc)
+ (modules shapes_of_types get_desc tuple)
  (libraries compiler-libs.common lintcstubs-arity.primitives_of_cmt))
+
+(rule
+ (enabled_if
+  (< %{ocaml_version} 5.4))
+ (action
+  (copy# tuple.lt54.ml tuple.ml)))
+
+(rule
+ (enabled_if
+  (>= %{ocaml_version} 5.4))
+ (action
+  (copy# tuple.gte54.ml tuple.ml)))
 
 (executable
  (public_name lintcstubs_genwrap)

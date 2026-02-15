@@ -11,7 +11,7 @@ bug-reports: "https://github.com/edwintorok/lintcstubs/issues"
 depends: [
   "dune" {>= "3.6"}
   "ocaml" {>= "4.13"}
-  "lintcstubs-arity" {>= "0.2.2"}
+  "lintcstubs-arity" {>= "0.5.1"}
   "odoc" {with-doc}
 ]
 build: [
