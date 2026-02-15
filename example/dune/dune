@@ -41,7 +41,9 @@
     %{bin:lintcstubs}
     --conf
     lintcstubs.json
-    --set warn.race-threshold 200
+    --set
+    warn.race-threshold
+    200
     %{dep:foostubs.c}
     %{dep:primitives.model.c}
     -I

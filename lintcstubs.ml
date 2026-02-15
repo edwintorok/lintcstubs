@@ -39,8 +39,9 @@ let set_default_flags () =
 
      [pre.cppflags]: Pre-processing parameters (that you'd pass to [cpp])
   *)
-  set_auto "pre.cppflags[+]" "-D_Alignas(x)=__attribute__((__aligned__(x)))";
+  set_auto "pre.cppflags[+]" "-D_Alignas(x)=__attribute__((__aligned__(x)))" ;
   set_auto "pre.cppflags[+]" "-D_Thread_local=__thread" ;
+
   (*set_bool "pre.keep" true;*)
 
   (* activate our own analyses
@@ -66,7 +67,7 @@ let set_default_flags () =
   set_auto "dbg.regression" "true" ;
 
   (* HTML output *)
-  set_string "result" "xslt";
+  set_string "result" "xslt" ;
 
   (* OCaml runtime model - needed so we know what locks/unlocks the runtime
      lock
@@ -92,7 +93,6 @@ let enable_tracing_if_needed () =
 let with_goblint_tmpdir f =
   GoblintDir.init () ;
   Fun.protect ~finally:GoblintDir.finalize f
-
 
 (** [report_results ()] reports the results in the configured formats.
     Errors/warnings are reported immediately on standard output channels,
@@ -124,11 +124,11 @@ let main () =
   (* for now we use goblint's CLI *)
   Maingoblint.parse_arguments () ;
   set_default_flags () ;
-  Maingoblint.handle_extraspecials ();
+  Maingoblint.handle_extraspecials () ;
   enable_tracing_if_needed () ;
   let file = with_goblint_tmpdir Maingoblint.preprocess_parse_merge in
   (* AutoTune.chooseConfig file ;*)
-  file |> Maingoblint.do_analyze None;
+  file |> Maingoblint.do_analyze None ;
   report_results ()
 
 (* Based on goblint.ml:

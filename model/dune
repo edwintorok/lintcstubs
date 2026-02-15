@@ -3,4 +3,5 @@
  (section
   (site
    (goblint lib)))
- (files (glob_files_rec *.c)))
+ (files
+  (glob_files_rec *.c)))

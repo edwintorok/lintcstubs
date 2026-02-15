@@ -1,6 +1,12 @@
 (executable
  (public_name lintcstubs)
- (libraries lintcstubs_analysis goblint.sites goblint.lib goblint.build-info fpath fmt)
+ (libraries
+  lintcstubs_analysis
+  goblint.sites
+  goblint.lib
+  goblint.build-info
+  fpath
+  fmt)
  (flags :standard -linkall)
  (package lintcstubs))
 

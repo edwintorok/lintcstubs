@@ -42,7 +42,9 @@ module DomainLock = struct
           v
       | None -> (
           let k = "__VERIFIER_ocaml_runtime_lock" in
-          match Queries.VarQuery.varqueries_from_names !Cilfacade.current_file [k] with
+          match
+            Queries.VarQuery.varqueries_from_names !Cilfacade.current_file [k]
+          with
           | [Queries.VarQuery.Global v], _ ->
               g := Some v ;
               v
@@ -52,7 +54,7 @@ module DomainLock = struct
               v
         )
 
-  let runtime_lock_event () = runtime_lock_var (), `NoOffset
+  let runtime_lock_event () = (runtime_lock_var (), `NoOffset)
 
   let runtime_lock () = AddrOf (Cil.var @@ runtime_lock_var ())
 
@@ -61,7 +63,9 @@ module DomainLock = struct
     if tracing () then
       tracel "OCaml domain lock must be held, current lockset is %a"
         LockDomain.MustLockset.pretty lockset ;
-    if not @@ LockDomain.MustLockset.mem (runtime_lock_var (), `NoOffset) lockset then
+    if
+      not @@ LockDomain.MustLockset.mem (runtime_lock_var (), `NoOffset) lockset
+    then
       (* we could use something similar to MayLocks to track may lock and give
          a better warning message: is the lock maybe held on some paths, or
          surely not held? *)
@@ -77,8 +81,18 @@ module DomainLock = struct
     let must =
       ctx.ask
         Queries.(
-          MustBeProtectedBy {mutex= runtime_lock_event (); kind = if write then Write else
-ReadWrite; global= arg;protection=Protection.Strong}
+          MustBeProtectedBy
+            {
+              mutex= runtime_lock_event ()
+            ; kind=
+                ( if write then
+                    Write
+                  else
+                    ReadWrite
+                )
+            ; global= arg
+            ; protection= Protection.Strong
+            }
         )
     in
     if not must then
@@ -233,7 +247,8 @@ let ocaml_params_globals =
 let caml_state =
   lazy
     ( match
-        Queries.VarQuery.varqueries_from_names !Cilfacade.current_file ["Caml_state"]
+        Queries.VarQuery.varqueries_from_names !Cilfacade.current_file
+          ["Caml_state"]
       with
     | [Queries.VarQuery.Global v], _ ->
         v
@@ -326,27 +341,34 @@ module Spec : Analyses.MCPSpec = struct
             *)
             custom_ops
             |> Queries.AD.iter @@ fun elt ->
-               elt |> Queries.AD.Addr.to_var |> Option.iter @@ function
-               | {vinit= {init= None}; _} ->
-                   ()
-               | {vinit= {init= Some init}; _} ->
-                   let funptrs =
-                     init
-                     |> function_ptrs_of_init []
-                     |> List.map @@ fun exp -> ctx.ask (Queries.MayPointTo exp)
-                   in
-                   if tracing () then
-                     tracel "found function pointers: %a"
-                       (Pretty.d_list "," Queries.AD.pretty)
-                       funptrs ;
-                   funptrs
-                   |> List.iter @@ fun funptr ->
-                      let new_stubs =
-                        funptr
-                        |> Queries.AD.elements
-                        |> List.filter_map (fun fn -> fn |> Queries.AD.Addr.to_var |> Option.map (fun f -> f.vname))
+               elt
+               |> Queries.AD.Addr.to_var
+               |> Option.iter @@ function
+                  | {vinit= {init= None}; _} ->
+                      ()
+                  | {vinit= {init= Some init}; _} ->
+                      let funptrs =
+                        init
+                        |> function_ptrs_of_init []
+                        |> List.map @@ fun exp ->
+                           ctx.ask (Queries.MayPointTo exp)
                       in
-                      cstubs := List.rev_append new_stubs !cstubs
+                      if tracing () then
+                        tracel "found function pointers: %a"
+                          (Pretty.d_list "," Queries.AD.pretty)
+                          funptrs ;
+                      funptrs
+                      |> List.iter @@ fun funptr ->
+                         let new_stubs =
+                           funptr
+                           |> Queries.AD.elements
+                           |> List.filter_map (fun fn ->
+                               fn
+                               |> Queries.AD.Addr.to_var
+                               |> Option.map (fun f -> f.vname)
+                           )
+                         in
+                         cstubs := List.rev_append new_stubs !cstubs
           )
         in
         (* TODO: find functions in struct and register as C stub roots... *)
