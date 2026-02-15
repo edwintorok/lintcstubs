@@ -232,7 +232,7 @@ STUB static void __caml_maybe_run_finalizer(void)
 
 STUB static void __caml_move(value arg, volatile value *dest)
 {
-    if ( !Is_block(arg) )
+    if (!Is_block(arg) )
         return;
     if ( arg == a_custom_op.v )
     {
@@ -260,7 +260,7 @@ STUB void __caml_maybe_run_gc(void)
     if ( !__VERIFIER_nondet_int() )
         return;
 
-#if CAML_VERSION >= 50000
+#if OCAML_VERSION >= 41400
     if (!Caml_state)
         return;
 #endif
