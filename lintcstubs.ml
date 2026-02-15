@@ -39,7 +39,9 @@ let set_default_flags () =
 
      [pre.cppflags]: Pre-processing parameters (that you'd pass to [cpp])
   *)
-  set_auto "pre.cppflags[+]" "-D_Alignas(x)=__attribute__((__aligned__(x)))" ;
+  set_auto "pre.cppflags[+]" "-D_Alignas(x)=__attribute__((__aligned__(x)))";
+  set_auto "pre.cppflags[+]" "-D_Thread_local=__thread" ;
+  (*set_bool "pre.keep" true;*)
 
   (* activate our own analyses
 

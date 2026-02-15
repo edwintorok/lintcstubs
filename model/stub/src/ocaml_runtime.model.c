@@ -97,10 +97,17 @@ STUB void __VERIFIER_camlparam1(value x)
     CAMLparam1(x);
     CAMLreturn0;
 }
-STUB void caml_failed_assert(char *msg, char *os, int n)
+
+
+#if OCAML_VERSION >= 50400
+#define maybe_const const
+#else
+#define maybe_const
+#endif
+
+STUB void caml_failed_assert(maybe_const char *msg, maybe_const char_os *os, int n)
 {
-    /* always fail assertion when called by CAMLassert */
-    assert(!msg);
+    assert(msg);
     assert(os);
     (void)n;
     abort();
@@ -253,6 +260,10 @@ STUB void __caml_maybe_run_gc(void)
     if ( !__VERIFIER_nondet_int() )
         return;
 
+#if CAML_VERSION >= 50000
+    if (!Caml_state)
+        return;
+#endif
     struct caml__roots_block *lr = CAML_LOCAL_ROOTS;
     int i, j;
     value *sp;
@@ -620,15 +631,22 @@ STUB void caml_alloc_point_here(void)
     __goblint_assert(!__in_noalloc);
 }
 
+#if OCAML_VERSION < 50000
 STUB int caml_page_table_lookup(void* v)
 {
     int res = __VERIFIER_nondet_int();
     return res & (In_heap | In_young | In_static_data);
-}          
+}
+#endif
+
+void caml_bad_caml_state(void)
+{
+    abort();
+}
 
 /* for now assume it can't happen */
 STUB void caml_raise_out_of_memory()
 {
     __builtin_unreachable();
-    
+    abort();
 }
