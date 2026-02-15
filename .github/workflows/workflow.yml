@@ -16,10 +16,6 @@ jobs:
           - ubuntu-latest
         ocaml-compiler:
           - 4.14.x
-          - 4.13.x
-        exclude:
-          - os: macos-latest
-            ocaml-compiler: 4.13.x
 
     runs-on: ${{ matrix.os }}
 
@@ -28,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Use OCaml ${{ matrix.ocaml-compiler }}
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
           dune-cache: true
@@ -46,7 +42,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Use OCaml 4.14.x
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: 4.14.x
           dune-cache: true
@@ -55,7 +51,7 @@ jobs:
       - run: opam install goblint
 
       - name: Lint fmt
-        uses: ocaml/setup-ocaml/lint-fmt@v2
+        uses: ocaml/setup-ocaml/lint-fmt@v3
 
   lint-doc:
     runs-on: ubuntu-latest
@@ -64,10 +60,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set-up OCaml 4.14
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: 4.14.x
           dune-cache: true
 
       - name: Lint doc
-        uses: ocaml/setup-ocaml/lint-doc@v2
+        uses: ocaml/setup-ocaml/lint-doc@v3
