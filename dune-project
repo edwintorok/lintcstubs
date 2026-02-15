@@ -36,5 +36,6 @@
   fpath
   (fmt (>= 0.9.0))
   (sexplib (>= v0.15.0))
+  (conf-graphviz :with-test)
  )
 )
