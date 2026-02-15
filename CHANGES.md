@@ -1,3 +1,8 @@
+## 0.5.0 (2026-02-16)
+
+* Upgrade to Goblint 2.7.1
+* Initial OCaml 5.4 support
+
 ## 0.4.7 (2023-09-11)
 
 * lower bounds and 32-bit build fixes

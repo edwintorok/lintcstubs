@@ -10,9 +10,6 @@
 (maintainers "Edwin Török <edwin.torok@cloud.com>")
 (license LGPL-2.1-or-later)
 
-; Separate packages because the generator also works on OCaml 5
-; The static analyzer doesn't yet because released versions of goblint don't support it yet (but dev version does)
-
 (package
  (name lintcstubs-gen)
  (synopsis "OCaml C stub wrapper generator")
