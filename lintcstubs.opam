@@ -38,3 +38,4 @@ build: [
   ["dune" "install" "-p" name "--create-install-files" name]
 ]
 dev-repo: "git+https://github.com/edwintorok/lintcstubs.git"
+available: [ os != "macos" | ocaml < "5.0" ]
