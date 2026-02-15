@@ -51,6 +51,6 @@ val shape_of_primitive :
 (** [shape_of_primitive type_expr primitive_type] infers the shape of a primitive argument or return value.
 
   @param type_expr the type expression from the TypedTree
-  @param primitive_type {!type:Primitives_of_cmt.t} describing whether the type is unboxed, untagged or regular OCaml value
+  @param primitive_type describing whether the type is unboxed, untagged or regular OCaml value
   @returns {!type:Shape.t} describing memory layout and value range
  *)
