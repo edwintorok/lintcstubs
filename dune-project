@@ -1,4 +1,4 @@
-(lang dune 3.17)
+(lang dune 3.18)
 (cram enable)
 (using dune_site 0.1)
 (using action-plugin 0.1)
@@ -12,6 +12,7 @@
 
 (package
  (name lintcstubs-gen)
+ (maintenance_intent "(latest)")
  (synopsis "OCaml C stub wrapper generator")
  (description "Generates a C model for how OCaml C primitives can be called. Link with a C model of the OCaml runtime, or run a static analyzer to find incorrect API/macro usage that leads to race conditions.")
  (depends

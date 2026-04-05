@@ -9,7 +9,7 @@ license: "LGPL-2.1-or-later"
 homepage: "https://codeberg.org/edwintorok/lintcstubs"
 bug-reports: "https://codeberg.org/edwintorok/lintcstubs/issues"
 depends: [
-  "dune" {>= "3.17"}
+  "dune" {>= "3.18"}
   "ocaml" {>= "4.13"}
   "lintcstubs-gen" {= version}
   "goblint" {>= "2.7.1"}
@@ -38,4 +38,5 @@ build: [
   ["dune" "install" "-p" name "--create-install-files" name]
 ]
 dev-repo: "git+https://codeberg.org/edwintorok/lintcstubs.git"
+x-maintenance-intent: ["(latest)"]
 available: [ os != "macos" | ocaml < "5.0" ]
