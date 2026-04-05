@@ -4,7 +4,7 @@ on:
   - pull_request
   - push
 
-permissions: read-all
+permissions: {}
 
 jobs:
   build:
@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Use OCaml ${{ matrix.ocaml-compiler }}
         uses: ocaml/setup-ocaml@v3
@@ -44,6 +46,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Use OCaml 4.14.x
         uses: ocaml/setup-ocaml@v3
@@ -62,6 +66,8 @@ jobs:
     steps:
       - name: Checkout tree
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set-up OCaml 4.14
         uses: ocaml/setup-ocaml@v3
