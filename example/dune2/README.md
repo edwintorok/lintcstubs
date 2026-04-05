@@ -15,7 +15,7 @@ The generated file can be kept up-to-date by running:
 dune runtest --auto-promote
 ```
 
-You will have to create a `compile_commands.json`, e.g. by using [`dune-compiledb`](https://github.com/edwintorok/dune-compiledb/):
+You will have to create a `compile_commands.json`, e.g. by using [`dune-compiledb`](https://codeberg.org/edwintorok/dune-compiledb/):
 ```sh
 dune rules | dune-compiledb
 ```
