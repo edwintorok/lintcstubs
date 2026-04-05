@@ -1,13 +1,13 @@
-(lang dune 3.6)
+(lang dune 3.17)
 (cram enable)
 (using dune_site 0.1)
 (using action-plugin 0.1)
 
 (generate_opam_files)
 (name lintcstubs)
-(source (github edwintorok/lintcstubs))
+(source (codeberg edwintorok/lintcstubs))
 (authors "Edwin Török <edwin.torok@cloud.com>")
-(maintainers "Edwin Török <edwin.torok@cloud.com>")
+(maintainers "Edwin Török <edwin@etorok.net>")
 (license LGPL-2.1-or-later)
 
 (package

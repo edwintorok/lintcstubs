@@ -1,6 +1,8 @@
 ![Build and test](https://github.com/edwintorok/lintcstubs/actions/workflows/workflow.yml/badge.svg)
 [![OCaml-CI Build Status](https://img.shields.io/endpoint?url=https://ocaml.ci.dev/badge/edwintorok/lintcstubs/main&logo=ocaml)](https://ocaml.ci.dev/github/edwintorok/lintcstubs)
-[Main repository](https://codeberg.org/edwintorok/lintcstubs)
+
+Moved to [https://codeberg.org/edwintorok/lintcstubs](https://codeberg.org/edwintorok/lintcstubs).
+Pull-requests and issues accepted in both places.
 
 Lintcstubs — Static analyzer for OCaml C primitives
 ===================================================
