@@ -77,11 +77,12 @@ let incgen_rule =
   (:mlfiles
    (glob_files_rec *.ml))
   (:cfiles
-   (glob_files_rec *.c)))
+   (glob_files_rec *.c))
+   %{bin:lintcstubs-dune-rules})
  (action
   (with-stdout-to
    dune.analysis.inc.gen
-   (run %{bin:lintcstubs-dune-rules} %{mlfiles} %{cfiles}))))
+   (system "lintcstubs-dune-rules %{mlfiles} %{cfiles}"))))
 
 (rule
  (alias runtest)
